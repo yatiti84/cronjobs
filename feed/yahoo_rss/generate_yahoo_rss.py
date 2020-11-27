@@ -7,7 +7,7 @@ from feedgen import util
 from dateutil import parser
 from datetime import datetime, timedelta, timezone
 
-import pyhash
+import hashlib
 import gzip
 
 # Imports the Google Cloud client library
@@ -78,9 +78,9 @@ fg.link(href='https://dev.mnews.tw', rel='alternate')
 fg.ttl(300)  # 5 minutes
 
 __base_url__ = 'https://dev.mnews.tw/story/'
-hasher = pyhash.fnv1_64()
+
 for item in __result__['allPosts']:
-    guid = '%0.2X' % hasher(__base_url__+item['slug'])
+    guid = hashlib.sha224((__base_url__+item['slug']).encode()).hexdigest()
     fe = fg.add_entry()
     fe.id(guid)
     fe.title(item['title'])
