@@ -13,7 +13,7 @@ from google.cloud import storage
 import gzip
 
 __gql_transport__ = RequestsHTTPTransport(
-    url='http://mirror-tv-graphql/admin/api',
+    url='http://mirror-tv-graphql.default.svc.cluster.local/admin/api',
     use_json=True,
     headers={
         "Content-type": "application/json",

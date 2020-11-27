@@ -14,7 +14,7 @@ import gzip
 from google.cloud import storage
 
 __gql_transport__ = RequestsHTTPTransport(
-    url='https://cms-dev.mnews.tw/admin/api',
+    url='https://mirror-tv-graphql.default.svc.cluster.local/admin/api',
     use_json=True,
     headers={
         'Content-type': 'application/json',
