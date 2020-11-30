@@ -95,7 +95,7 @@ for item in __result__['allPosts']:
     content = ''
     if item['heroImage'] is not None:
         fe.media.content(
-            {'url': item['heroImage']['urlOriginal'], 'medium': 'image'})
+            content={'url': item['heroImage']['urlOriginal'], 'medium': 'image'}, group=None)
         content += '<img src="%s" alt="%s" />' % (
             item['heroImage']['urlOriginal'], item['heroImage']['title'])
     if item['contentHtml'] is not None:

@@ -136,7 +136,7 @@ for id, category in __categories__.items():
             parser.isoparse(item['updatedAt'])))
         if item['heroImage'] is not None:
             fe.media.content(
-                {'url': item['heroImage']['urlOriginal'], 'medium': 'image'})
+                content={'url': item['heroImage']['urlOriginal'], 'medium': 'image'}, group=None)
 
     upload_data(
         bucket_name=__bucket_name__,
