@@ -112,17 +112,23 @@ for id, category in __categories__.items():
     fg = FeedGenerator()
     fg.load_extension('media', atom=False, rss=True)
     # TODO
-    fg.title('Mirror Media TV ' + category['title'] + ' Title')
+    fg.title('鏡新聞 ' + category['title'] + ' Title')
     # TODO
-    fg.description('Mirror Media TV ' + category['title'] + ' Description')
+    fg.description('鏡新聞 ' + category['title'] + ' Description')
     # TODO
     fg.id('https://dev.mnews.tw')
     # TODO
     fg.pubDate(datetime.now(timezone.utc))
     # TODO
     fg.updated(datetime.now(timezone.utc))
+    # TODO
+    fg.image(url='https://dev.mnews.tw/_nuxt/img/Mnews_Logo-b.b5dfe4f.svg',
+             title='鏡新聞 ' + category['title'] + ' Title', link='https://dev.mnews.tw')
+    # TODO
+    fg.rights(rights='Copyright 2019-2020')
     fg.link(href='https://dev.mnews.tw', rel='alternate')
     fg.ttl(300)  # 5 minutes
+    fg.language('zh-TW')
 
     for item in result['allPosts']:
         fe = fg.add_entry()

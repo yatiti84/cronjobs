@@ -1,3 +1,5 @@
+# Imports the Google Cloud client library
+from google.cloud import storage
 from gql import gql, Client
 from gql.transport.requests import RequestsHTTPTransport
 
@@ -9,9 +11,6 @@ from datetime import datetime, timedelta, timezone
 
 import hashlib
 import gzip
-
-# Imports the Google Cloud client library
-from google.cloud import storage
 
 __gql_transport__ = RequestsHTTPTransport(
     url='https://mirror-tv-graphql.default.svc.cluster.local/admin/api',
@@ -65,17 +64,23 @@ fg = FeedGenerator()
 fg.load_extension('media', atom=False, rss=True)
 fg.load_extension('dc', atom=False, rss=True)
 # TODO
-fg.title('Mirror Media TV Yahoo Title')
+fg.title('鏡新聞 Yahoo Title')
 # TODO
-fg.description('Mirror Media TV Yahoo Description')
+fg.description('鏡新聞 Yahoo Description')
 # TODO
 fg.id('https://dev.mnews.tw')
 # TODO
 fg.pubDate(datetime.now(timezone.utc))
 # TODO
 fg.updated(datetime.now(timezone.utc))
+# TODO
+fg.image(url='https://dev.mnews.tw/_nuxt/img/Mnews_Logo-b.b5dfe4f.svg',
+         title='鏡新聞 Yahoo Title', link='https://dev.mnews.tw')
+# TODO
+fg.rights(rights='Copyright 2019-2020')
 fg.link(href='https://dev.mnews.tw', rel='alternate')
 fg.ttl(300)  # 5 minutes
+fg.language('zh-TW')
 
 __base_url__ = 'https://dev.mnews.tw/story/'
 
