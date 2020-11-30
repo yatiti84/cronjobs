@@ -150,5 +150,5 @@ for id, category in __categories__.items():
                         encoding='UTF-8', xml_declaration=True),
         content_type='application/rss+xml',
         destination_blob_name=__rss_base__ +
-        '/google_news_' + category['slug'] + '.xml'
+        '/' + category['slug'] + '.xml'
     )
