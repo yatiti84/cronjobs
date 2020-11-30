@@ -33,7 +33,7 @@ __seven_days_ago__ = datetime.now(timezone.utc) - timedelta(days=7)
 # To retrieve the latest post published after a specified day
 __qgl_post_template__ = '''
 {
-    allPosts(where: {publishTime_gt: "%s", state: published}) {
+    allPosts(where: {source: null, state: published}, sortBy: publishTime_DESC, first: 75) {
         title
         slug
         contentHtml
@@ -58,7 +58,7 @@ __qgl_post_template__ = '''
 }
 '''
 
-__gql_query__ = gql(__qgl_post_template__ % __seven_days_ago__.isoformat())
+__gql_query__ = gql(__qgl_post_template__)
 __result__ = __gql_client__.execute(__gql_query__)
 
 fg = FeedGenerator()

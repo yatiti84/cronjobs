@@ -30,7 +30,7 @@ __gql_client__ = Client(
 # To retrieve the latest 25 published posts for the specified category
 __qgl_post_template__ = '''
 {
-    allPosts(where: {categories_some: {id: %d}, state: published}, sortBy: publishTime_DESC, first: 25) {
+    allPosts(where: {source: null, categories_some: {id: %d}, state: published}, sortBy: publishTime_DESC, first: 75) {
         title
         slug
         heroImage {
