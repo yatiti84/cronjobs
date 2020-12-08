@@ -36,7 +36,7 @@ __gql_client__ = Client(
 # To retrieve the latest 100 published posts
 __qgl_post_template__ = '''
 {
-    allPosts(where: {source: null, state: published}, sortBy: publishTime_DESC, first: 75) {
+    allPosts(where: {source: "tv", state: published}, sortBy: publishTime_DESC, first: 75) {
         id
         title
         slug
