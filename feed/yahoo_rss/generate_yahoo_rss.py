@@ -74,7 +74,7 @@ fg.pubDate(datetime.now(timezone.utc))
 # TODO
 fg.updated(datetime.now(timezone.utc))
 # TODO
-fg.image(url='https://dev.mnews.tw/_nuxt/img/Mnews_Logo-b.b5dfe4f.svg',
+fg.image(url='https://dev.mnews.tw/logo.png',
          title='鏡新聞 Yahoo Title', link='https://dev.mnews.tw')
 # TODO
 fg.rights(rights='Copyright 2019-2020')

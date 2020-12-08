@@ -122,7 +122,7 @@ for id, category in __categories__.items():
     # TODO
     fg.updated(datetime.now(timezone.utc))
     # TODO
-    fg.image(url='https://dev.mnews.tw/_nuxt/img/Mnews_Logo-b.b5dfe4f.svg',
+    fg.image(url='https://dev.mnews.tw/logo.png',
              title='鏡新聞 ' + category['title'] + ' Title', link='https://dev.mnews.tw')
     # TODO
     fg.rights(rights='Copyright 2019-2020')
