@@ -95,9 +95,11 @@ for item in __result__['allPosts']:
         parser.isoparse(item['publishTime'])))
     fe.updated(util.formatRFC2822(
         parser.isoparse(item['updatedAt'])))
-    if 'brief' in item:
-        fe.description(description=item['brief'], isSummary=True)
     content = ''
+    # brief doesn't not provide html
+    # if 'brief' in item:
+    #     fe.description(description=item['brief'], isSummary=True)
+    #     content += item['brief']
     if item['heroImage'] is not None:
         fe.media.content(
             content={'url': item['heroImage']['urlOriginal'], 'medium': 'image'}, group=None)
