@@ -14,7 +14,7 @@ import gzip
 from json import JSONDecoder
 
 __gql_transport__ = RequestsHTTPTransport(
-    url='https://mirror-tv-graphql.default.svc.cluster.local/admin/api',
+    url='http://mirror-tv-graphql.default.svc.cluster.local/admin/api',
     use_json=True,
     headers={
         'Content-type': 'application/json',
