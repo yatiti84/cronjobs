@@ -131,7 +131,7 @@ for id, category in __categories__.items():
     fg.language('zh-TW')
 
     for item in result['allPosts']:
-        fe = fg.add_entry()
+        fe = fg.add_entry(order='append')
         fe.id(__base_url__+item['slug'])
         fe.title(item['title'])
         fe.link(href=__base_url__+item['slug'], rel='alternate')

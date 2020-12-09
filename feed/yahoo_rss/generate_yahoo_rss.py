@@ -90,7 +90,7 @@ __json_decoder__ = JSONDecoder()
 
 for item in __result__['allPosts']:
     guid = hashlib.sha224((__base_url__+item['slug']).encode()).hexdigest()
-    fe = fg.add_entry()
+    fe = fg.add_entry(order='append')
     fe.id(guid)
     fe.title(item['title'])
     fe.link(href=__base_url__+item['slug'], rel='alternate')
