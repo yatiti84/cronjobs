@@ -23,7 +23,7 @@ spec:
           serviceAccountName: ksa-feed
           containers:
           - name: mirror-tv-feed-google-news-rss
-            image: gcr.io/mirror-tv-275709/mirror-tv-feed:20201130-2
+            image: gcr.io/mirror-tv-275709/mirror-tv-feed:20201210-2 
             workingDir: /feed
             command: [ "./start.sh" ]
             args:
