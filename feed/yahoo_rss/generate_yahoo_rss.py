@@ -11,6 +11,7 @@ from datetime import datetime, timedelta, timezone
 
 import hashlib
 import gzip
+from json import JSONDecoder
 
 __gql_transport__ = RequestsHTTPTransport(
     url='https://mirror-tv-graphql.default.svc.cluster.local/admin/api',
@@ -35,6 +36,7 @@ __qgl_post_template__ = '''
     allPosts(where: {source: "tv", state: published}, sortBy: publishTime_DESC, first: 75) {
         title
         slug
+        brief
         contentHtml
         heroImage {
             urlOriginal
@@ -84,6 +86,8 @@ fg.language('zh-TW')
 
 __base_url__ = 'https://dev.mnews.tw/story/'
 
+__json_decoder__ = JSONDecoder()
+
 for item in __result__['allPosts']:
     guid = hashlib.sha224((__base_url__+item['slug']).encode()).hexdigest()
     fe = fg.add_entry()
@@ -96,10 +100,11 @@ for item in __result__['allPosts']:
     fe.updated(util.formatRFC2822(
         parser.isoparse(item['updatedAt'])))
     content = ''
-    # brief doesn't not provide html
-    # if 'brief' in item:
-    #     fe.description(description=item['brief'], isSummary=True)
-    #     content += item['brief']
+
+    if item['brief'] is not None:
+        brief = __json_decoder__.decode(item['brief'])['html']
+        fe.description(description=brief, isSummary=True)
+        content += brief
     if item['heroImage'] is not None:
         fe.media.content(
             content={'url': item['heroImage']['urlOriginal'], 'medium': 'image'}, group=None)
