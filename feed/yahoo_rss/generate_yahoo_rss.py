@@ -6,7 +6,7 @@ from gql.transport.requests import RequestsHTTPTransport
 from feedgen.feed import FeedGenerator
 from feedgen import util
 
-from dateutil import parser
+from dateutil import parser, tz
 from datetime import datetime, timedelta, timezone
 
 import hashlib
@@ -62,6 +62,9 @@ __qgl_post_template__ = '''
 __gql_query__ = gql(__qgl_post_template__)
 __result__ = __gql_client__.execute(__gql_query__)
 
+# the timezone for rss
+__timezone__ = tz.gettz("Asia/Taipei")
+
 fg = FeedGenerator()
 fg.load_extension('media', atom=False, rss=True)
 fg.load_extension('dc', atom=False, rss=True)
@@ -72,9 +75,9 @@ fg.description('鏡新聞 Yahoo Description')
 # TODO
 fg.id('https://dev.mnews.tw')
 # TODO
-fg.pubDate(datetime.now(timezone.utc))
+fg.pubDate(datetime.now(timezone.utc).astimezone(__timezone__))
 # TODO
-fg.updated(datetime.now(timezone.utc))
+fg.updated(datetime.now(timezone.utc).astimezone(__timezone__))
 # TODO
 fg.image(url='https://dev.mnews.tw/logo.png',
          title='鏡新聞 Yahoo Title', link='https://dev.mnews.tw')
@@ -96,9 +99,9 @@ for item in __result__['allPosts']:
     fe.link(href=__base_url__+item['slug'], rel='alternate')
     fe.guid(guid)
     fe.pubDate(util.formatRFC2822(
-        parser.isoparse(item['publishTime'])))
+        parser.isoparse(item['publishTime']).astimezone(__timezone__)))
     fe.updated(util.formatRFC2822(
-        parser.isoparse(item['updatedAt'])))
+        parser.isoparse(item['updatedAt']).astimezone(__timezone__)))
     content = ''
 
     if item['brief'] is not None:
