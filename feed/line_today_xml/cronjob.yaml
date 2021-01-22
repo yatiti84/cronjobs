@@ -22,16 +22,16 @@ spec:
         spec:
           serviceAccountName: ksa-feed
           containers:
-          - name: mirror-tv-feed-line-today-xml
-            image: gcr.io/mirror-tv-275709/mirror-tv-feed:20201210-2 
-            workingDir: /feed
-            command: [ "./start.sh" ]
-            args:
-            - $(EXECFOLDER)
-            - $(EXECSCRIPT)
-            env:
-            - name: EXECFOLDER
-              value: line_today_xml
-            - name: EXECSCRIPT
-              value: generate_line_today_xml.py
+            - name: mirror-tv-feed-line-today-xml
+              image: gcr.io/mirror-tv-275709/mirror-tv-feed:20210122-9
+              workingDir: /feed
+              command: ["./start.sh"]
+              args:
+                - $(EXECFOLDER)
+                - $(EXECSCRIPT)
+              env:
+                - name: EXECFOLDER
+                  value: line_today_xml
+                - name: EXECSCRIPT
+                  value: generate_line_today_xml.py
           restartPolicy: OnFailure

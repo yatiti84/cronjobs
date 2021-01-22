@@ -38,19 +38,19 @@ __qgl_post_template__ = '''
 {
     allPosts(where: {source: "tv", state: published}, sortBy: publishTime_DESC, first: 75) {
         id
-        title
+        name
         slug
         contentHtml
         heroImage {
             urlOriginal
-            title
+            name
         }
         categories {
-            title
+            name
             slug
         }
         relatedPosts {
-            title
+            name
             slug
         }
         writers {
@@ -142,8 +142,8 @@ if __name__ == '__main__':
             'language': 'zh',
             'startYmdtUnix': availableDate,
             'endYmdtUnix': tsConverter(article['publishTime']) + (round(timedelta(news_available_days, 0).total_seconds()) * 1000),
-            'title': article['title'],
-            'category': article['categories'][0]['title'] if len(article['categories']) > 0 else [],
+            'title': article['name'],
+            'category': article['categories'][0]['name'] if len(article['categories']) > 0 else [],
             'publishTimeUnix': availableDate,
             'contentType': 0,
             'contents': {
@@ -152,7 +152,7 @@ if __name__ == '__main__':
                 },
             },
             'recommendArticles': {
-                'article': [{'title': x['title'], 'url': base_url + '/' + x['slug'] + '/'} for x in article['relatedPosts'][:6] if x]
+                'article': [{'title': x['name'], 'url': base_url + '/' + x['slug'] + '/'} for x in article['relatedPosts'][:6] if x]
             },
             'author': '鏡新聞'
         }
