@@ -23,7 +23,7 @@ spec:
           serviceAccountName: ksa-feed
           containers:
             - name: mirror-tv-feed-line-today-xml
-              image: gcr.io/mirror-tv-275709/mirror-tv-feed:20210122-9
+              image: gcr.io/mirror-tv-275709/mirror-tv-feed:20210122-11
               workingDir: /feed
               command: ["./start.sh"]
               args:
