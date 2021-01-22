@@ -31,13 +31,13 @@ __gql_client__ = Client(
 __qgl_post_template__ = '''
 {
     allPosts(where: {source: "tv", categories_some: {id: %d}, state: published}, sortBy: publishTime_DESC, first: 75) {
-        title
+        name
         slug
         heroImage {
             urlOriginal
         }
         categories {
-            title
+            name
             slug
         }
         publishTime
@@ -71,31 +71,31 @@ def upload_data(bucket_name: str, data: bytes, content_type: str, destination_bl
 __categories__ = {
     1: {
         'slug': 'entertainment',
-        'title': '娛樂',
+        'name': '娛樂',
     },
     2: {
         'slug': 'news',
-        'title': '時事',
+        'name': '時事',
     },
     3: {
         'slug': 'life',
-        'title': '生活',
+        'name': '生活',
     },
     4: {
         'slug': 'politics',
-        'title': '政治',
+        'name': '政治',
     },
     5: {
         'slug': 'finance',
-        'title': '財經',
+        'name': '財經',
     },
     6: {
         'slug': 'international',
-        'title': '國際',
+        'name': '國際',
     },
     8: {
         'slug': 'person',
-        'title': '人物',
+        'name': '人物',
     },
 }
 
@@ -112,9 +112,9 @@ for id, category in __categories__.items():
     fg = FeedGenerator()
     fg.load_extension('media', atom=False, rss=True)
     # TODO
-    fg.title('鏡新聞 ' + category['title'] + ' Title')
+    fg.title('鏡新聞 ' + category['name'] + ' Title')
     # TODO
-    fg.description('鏡新聞 ' + category['title'] + ' Description')
+    fg.description('鏡新聞 ' + category['name'] + ' Description')
     # TODO
     fg.id('https://dev.mnews.tw')
     # TODO
@@ -123,7 +123,7 @@ for id, category in __categories__.items():
     fg.updated(datetime.now(timezone.utc))
     # TODO
     fg.image(url='https://dev.mnews.tw/logo.png',
-             title='鏡新聞 ' + category['title'] + ' Title', link='https://dev.mnews.tw')
+             title='鏡新聞 ' + category['name'] + ' Title', link='https://dev.mnews.tw')
     # TODO
     fg.rights(rights='Copyright 2019-2020')
     fg.link(href='https://dev.mnews.tw', rel='alternate')
@@ -133,7 +133,7 @@ for id, category in __categories__.items():
     for item in result['allPosts']:
         fe = fg.add_entry(order='append')
         fe.id(__base_url__+item['slug'])
-        fe.title(item['title'])
+        fe.title(item['name'])
         fe.link(href=__base_url__+item['slug'], rel='alternate')
         fe.guid(__base_url__ + item['slug'])
         fe.pubDate(util.formatRFC2822(

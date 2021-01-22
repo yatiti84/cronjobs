@@ -22,16 +22,16 @@ spec:
         spec:
           serviceAccountName: ksa-feed
           containers:
-          - name: mirror-tv-feed-google-news-rss
-            image: gcr.io/mirror-tv-275709/mirror-tv-feed:20201210-2 
-            workingDir: /feed
-            command: [ "./start.sh" ]
-            args:
-            - $(EXECFOLDER)
-            - $(EXECSCRIPT)
-            env:
-            - name: EXECFOLDER
-              value: google_news_rss
-            - name: EXECSCRIPT
-              value: generate_google_news_rss.py
+            - name: mirror-tv-feed-google-news-rss
+              image: gcr.io/mirror-tv-275709/mirror-tv-feed:20210122-7
+              workingDir: /feed
+              command: ["./start.sh"]
+              args:
+                - $(EXECFOLDER)
+                - $(EXECSCRIPT)
+              env:
+                - name: EXECFOLDER
+                  value: google_news_rss
+                - name: EXECSCRIPT
+                  value: generate_google_news_rss.py
           restartPolicy: OnFailure
