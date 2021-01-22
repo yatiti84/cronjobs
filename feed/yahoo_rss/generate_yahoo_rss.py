@@ -34,20 +34,20 @@ __seven_days_ago__ = datetime.now(timezone.utc) - timedelta(days=7)
 __qgl_post_template__ = '''
 {
     allPosts(where: {source: "tv", state: published}, sortBy: publishTime_DESC, first: 75) {
-        title
+        name
         slug
         brief
         contentHtml
         heroImage {
             urlOriginal
-            title
+            name
         }
         categories {
-            title
+            name
             slug
         }
         relatedPosts {
-            title
+            name
             slug
         }
         writers {
@@ -92,7 +92,7 @@ for item in __result__['allPosts']:
     guid = hashlib.sha224((__base_url__+item['slug']).encode()).hexdigest()
     fe = fg.add_entry(order='append')
     fe.id(guid)
-    fe.title(item['title'])
+    fe.title(item['name'])
     fe.link(href=__base_url__+item['slug'], rel='alternate')
     fe.guid(guid)
     fe.pubDate(util.formatRFC2822(
@@ -109,17 +109,17 @@ for item in __result__['allPosts']:
         fe.media.content(
             content={'url': item['heroImage']['urlOriginal'], 'medium': 'image'}, group=None)
         content += '<img src="%s" alt="%s" />' % (
-            item['heroImage']['urlOriginal'], item['heroImage']['title'])
+            item['heroImage']['urlOriginal'], item['heroImage']['name'])
     if item['contentHtml'] is not None:
         content += item['contentHtml']
     if len(item['relatedPosts']) > 0:
         content += '<br/><p class="read-more-vendor"><span>更多鏡週刊報導</span>'
         for related_post in item['relatedPosts'][:3]:
             content += '<br/><a href="%s">%s</a>' % (
-                __base_url__+related_post['slug'], related_post['title'])
+                __base_url__+related_post['slug'], related_post['name'])
     fe.content(content=content, type='CDATA')
     fe.category(
-        list(map(lambda c: {'term': c['title'], 'label': c['title']}, item['categories'])))
+        list(map(lambda c: {'term': c['name'], 'label': c['name']}, item['categories'])))
     if item['writers'] is not None:
         fe.dc.dc_creator(creator=list(
             map(lambda w: w['name'], item['writers'])))
