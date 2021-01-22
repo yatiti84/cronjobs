@@ -4,7 +4,7 @@ from gql.transport.requests import RequestsHTTPTransport
 from feedgen.feed import FeedGenerator
 from feedgen import util
 
-from dateutil import parser
+from dateutil import parser, tz
 from datetime import datetime, timezone
 
 # Imports the Google Cloud client library
@@ -105,6 +105,9 @@ __bucket_name__ = "static-mnews-tw-dev"
 # rss folder path
 __rss_base__ = 'rss'
 
+# the timezone for rss
+__timezone__ = tz.gettz("Asia/Taipei")
+
 for id, category in __categories__.items():
     query = gql(__qgl_post_template__ % id)
     result = __gql_client__.execute(query)
@@ -118,9 +121,9 @@ for id, category in __categories__.items():
     # TODO
     fg.id('https://dev.mnews.tw')
     # TODO
-    fg.pubDate(datetime.now(timezone.utc))
+    fg.pubDate(datetime.now(timezone.utc).astimezone(__timezone__))
     # TODO
-    fg.updated(datetime.now(timezone.utc))
+    fg.updated(datetime.now(timezone.utc).astimezone(__timezone__))
     # TODO
     fg.image(url='https://dev.mnews.tw/logo.png',
              title='鏡新聞 ' + category['name'] + ' Title', link='https://dev.mnews.tw')
@@ -137,7 +140,7 @@ for id, category in __categories__.items():
         fe.link(href=__base_url__+item['slug'], rel='alternate')
         fe.guid(__base_url__ + item['slug'])
         fe.pubDate(util.formatRFC2822(
-            parser.isoparse(item['publishTime'])))
+            parser.isoparse(item['publishTime']).astimezone(__timezone__)))
         fe.updated(util.formatRFC2822(
             parser.isoparse(item['updatedAt'])))
         if item['heroImage'] is not None:
