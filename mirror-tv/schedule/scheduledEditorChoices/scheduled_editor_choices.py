@@ -3,6 +3,20 @@ from gql.transport.requests import RequestsHTTPTransport
 from environs import Env
 from google.cloud import secretmanager
 
+'''
+For scheduled_editor_choices to run, a CMS bot user is required for it to mutate Editor Choices.
+
+To authenticate as the bot user, the following environmental variables are required, mainly to access GCP secret:
+
+GCP_PROJECT_ID
+GCP_SECERT_ID_CRONJOBS_USERNAME
+GCP_SECERT_VERSION_CRONJOBS_USERNAME
+GCP_SECERT_ID_CRONJOBS_PASSWORD
+GCP_SECERT_VERSION_CRONJOBS_PASSWORD
+
+The names are self explained.
+'''
+
 # TODO move it to commandline arguments
 __cms_graphql_endpoint__ = 'http://mirror-tv-graphql.default.svc.cluster.local/admin/api'
 
