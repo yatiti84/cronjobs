@@ -88,10 +88,10 @@ __gql_authenticated_client__ = __gql_client__.transport = __gql_transport_with_t
 # To query the EditorChoices in state of published and scheduled, so it can tolling update their state
 __qgl_query_editor_choices_to_modify__ = '''
 {
-  allEditorChoices(where: {OR: [{state: published}, {state: scheduled}]}) {
-    id
-    state
-  }
+    allEditorChoices(where: {OR: [{state: published}, {state: scheduled}]}) {
+        id
+        state
+    }
 }
 '''
 
@@ -104,7 +104,7 @@ def get_updated_state_value(state: str = 'draft') -> str:
     states_waterfall = ['scheduled', 'published', 'draft']
 
     # update the state value according to the original state, only scheduled and published will not cause an exception
-    # if state is not scheduled and published, then it exception happens and we do not update it
+    # if state is not scheduled and published, then an exception happens and we do not update it
     try:
         return states_waterfall[states_waterfall.index(state) + 1]
     except:
@@ -117,18 +117,18 @@ new_data_str = str([{'id': editor_choice['id'], 'state': get_updated_state_value
 # To update EditorChoices, data should be an array of objects containing id, and data
 __qgl_mutate_editor_choices_template__ = '''
 mutation {
-  updateEditorChoices(data: %s) {
-    id
-    state
-  }
+    updateEditorChoices(data: %s) {
+        id
+        state
+    }
 }
 '''
 
 # Unauthenticate user after finishing updating to protect the user. Cronjobs' unauthentication shouldn't interfere each other.
 __qgl_mutate_unauthenticate_user__ = '''
 __qgl_mutate_editor_choices_template__ = mutation {
-  unauthenticate: unauthenticateUser {
-    success
-  }
+    unauthenticate: unauthenticateUser {
+        success
+    }
 }
 '''
