@@ -91,7 +91,9 @@ mutation = gql(__qgl_mutation_authenticate_get_token__ %
                (__username__, __password__))
 
 __token__ = __gql_client__.execute(mutation)['authenticate']['token']
-print(__token__)
+
+print(f'{os.path.basename(__file__)} has authenticated as {__username__}')
+
 
 __gql_transport_with_token__ = __gql_transport__.headers.update(
     {'Authentication': f'Bearer {__token__}'})
