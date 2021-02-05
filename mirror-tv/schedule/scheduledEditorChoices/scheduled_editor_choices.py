@@ -32,7 +32,7 @@ __gql_transport__ = RequestsHTTPTransport(
 
 __gql_client__ = Client(
     transport=__gql_transport__,
-    fetch_schema_from_transport=True,
+    fetch_schema_from_transport=False,
 )
 
 env = Env()
