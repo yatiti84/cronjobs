@@ -144,10 +144,16 @@ def get_updated_state_value(state: str = 'draft') -> str:
         return state
 
 
-new_data_str = str([{'id': editor_choice['id'], 'state': get_updated_state_value(editor_choice['state'])}
-                    for editor_choice in editor_choices])
+# To update EditorChoices, data should be an array of objects containing id and data
 
-# To update EditorChoices, data should be an array of objects containing id, and data
+new_data_list = ['{id: "%s", data:{state: %s}}' % (
+    editor_choice["id"], get_updated_state_value(editor_choice["state"])) for editor_choice in editor_choices]
+new_data_str = '[' + ','.join(new_data_list) + ']'
+
+
+print(
+    f'The editor choices is going to be updated as: {new_data_str}')
+
 __qgl_mutate_editor_choices_template__ = '''
 mutation {
     updateEditorChoices(data: %s) {
