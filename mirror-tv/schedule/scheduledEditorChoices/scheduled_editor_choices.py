@@ -94,11 +94,21 @@ __token__ = __gql_client__.execute(mutation)['authenticate']['token']
 
 print(f'{os.path.basename(__file__)} has authenticated as {__username__}')
 
+__gql_transport_with_token__ = RequestsHTTPTransport(
+    url=__cms_graphql_endpoint__,
+    use_json=True,
+    headers={
+        "Content-type": "application/json",
+        'Authorization': f'Bearer {__token__}'
+    },
+    verify=True,
+    retries=3,
+)
 
-__gql_transport_with_token__ = __gql_transport__.headers.update(
-    {'Authentication': f'Bearer {__token__}'})
-
-__gql_authenticated_client__ = __gql_client__.transport = __gql_transport_with_token__
+__gql_authenticated_client__ = Client(
+    transport=__gql_transport_with_token__,
+    fetch_schema_from_transport=False,
+)
 
 
 # To query the EditorChoices in state of published and scheduled, so it can tolling update their state
