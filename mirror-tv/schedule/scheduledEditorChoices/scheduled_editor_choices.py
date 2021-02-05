@@ -113,6 +113,13 @@ query = gql(__qgl_query_editor_choices_to_modify__)
 editor_choices = __gql_authenticated_client__.execute(query)[
     'allEditorChoices']
 
+if len(editor_choices) == 0:
+    print('There is nothing to be updated. Exit now...')
+    exit(0)
+
+print(
+    f'These editor choices are about to be updated: {editor_choices}')
+
 
 def get_updated_state_value(state: str = 'draft') -> str:
     states_waterfall = ['scheduled', 'published', 'draft']
