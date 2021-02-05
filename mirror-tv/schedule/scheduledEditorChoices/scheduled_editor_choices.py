@@ -4,6 +4,7 @@ from environs import Env
 from google.cloud import secretmanager
 import logging
 import os
+import sys
 
 '''
 For scheduled_editor_choices to run, a CMS bot user is required for it to mutate Editor Choices.
@@ -19,8 +20,21 @@ GCP_SECERT_VERSION_CRONJOBS_PASSWORD
 The names are self explained.
 '''
 
-# TODO move it to commandline arguments
-__cms_graphql_endpoint__ = 'http://mirror-tv-graphql.default.svc.cluster.local/admin/api'
+
+def help():
+    '''Print usage'''
+    print(f'''
+Usage:
+{os.path.basename(__file__)} "cms graphql endpoint"
+    ''')
+
+
+if len(sys.argv) != 2:
+    print('The number of arguments is wrong')
+    help()
+    exit(1)
+
+__cms_graphql_endpoint__ = sys.argv[1]
 
 __gql_transport__ = RequestsHTTPTransport(
     url=__cms_graphql_endpoint__,
@@ -40,12 +54,10 @@ __gql_client__ = Client(
 env = Env()
 env.read_env()  # read .env file, if it exists
 
-
-__gcp_project_id__ = env('GCP_PROJECT_ID')
-
-
 # Create the Secret Manager client.
 __secretmanager_client__ = secretmanager.SecretManagerServiceClient()
+
+__gcp_project_id__ = env('GCP_PROJECT_ID')
 
 
 def access_gcp_secret(project_id: str = __gcp_project_id__, secret_id: str = None, secret_version: str = 'latest') -> str:
