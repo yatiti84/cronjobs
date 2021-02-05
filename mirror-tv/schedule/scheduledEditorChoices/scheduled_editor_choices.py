@@ -163,9 +163,14 @@ mutation {
 }
 '''
 
+mutation = gql(__qgl_mutate_editor_choices_template__ % new_data_str)
+updateEditorChoices = __gql_authenticated_client__.execute(mutation)
+
+print(f'EditorChoices are updated as:{updateEditorChoices}')
+
 # Unauthenticate user after finishing updating to protect the user. Cronjobs' unauthentication shouldn't interfere each other.
 __qgl_mutate_unauthenticate_user__ = '''
-__qgl_mutate_editor_choices_template__ = mutation {
+mutation {
     unauthenticate: unauthenticateUser {
         success
     }
