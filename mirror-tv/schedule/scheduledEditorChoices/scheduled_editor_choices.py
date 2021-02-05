@@ -2,6 +2,8 @@ from gql import gql, Client
 from gql.transport.requests import RequestsHTTPTransport
 from environs import Env
 from google.cloud import secretmanager
+import logging
+import os
 
 '''
 For scheduled_editor_choices to run, a CMS bot user is required for it to mutate Editor Choices.
@@ -176,3 +178,12 @@ mutation {
     }
 }
 '''
+
+mutation = gql(__qgl_mutate_unauthenticate_user__)
+unauthenticate = __gql_authenticated_client__.execute(mutation)[
+    'unauthenticate']
+
+if unauthenticate['success'] == True:
+    print(f'{os.path.basename(__file__)} has unauthenticated as {__username__}')
+else:
+    logging.error(f'{__username__} failed to unauthenticate')
