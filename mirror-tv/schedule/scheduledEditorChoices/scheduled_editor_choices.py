@@ -2,7 +2,6 @@ from gql import gql, Client
 from gql.transport.requests import RequestsHTTPTransport
 from environs import Env
 from google.cloud import secretmanager
-import logging
 import os
 import sys
 
@@ -198,4 +197,4 @@ unauthenticate = __gql_authenticated_client__.execute(mutation)[
 if unauthenticate['success'] == True:
     print(f'{os.path.basename(__file__)} has unauthenticated as {__username__}')
 else:
-    logging.error(f'{__username__} failed to unauthenticate')
+    print(f'{__username__} failed to unauthenticate')

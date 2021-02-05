@@ -4,6 +4,8 @@ kind: ServiceAccount
 metadata:
   name: ksa-feed
   namespace: cron
+  annotations:
+    iam.gke.io/gcp-service-account: gsa-k8s-tv-dev-cron-feed@mirror-tv-275709.iam.gserviceaccount.com
 ---
 apiVersion: batch/v1beta1
 kind: CronJob
@@ -23,7 +25,7 @@ spec:
           serviceAccountName: ksa-feed
           containers:
             - name: mirror-tv-feed-google-news-rss
-              image: gcr.io/mirror-tv-275709/mirror-tv-feed:20210203-1
+              image: gcr.io/mirror-tv-275709/cronjobs:20210205-2
               workingDir: /cronjobs/mirror-tv
               command: ["./exec.sh"]
               args:
@@ -54,7 +56,7 @@ spec:
           serviceAccountName: ksa-feed
           containers:
             - name: mirror-tv-feed-line-today-xml
-              image: gcr.io/mirror-tv-275709/mirror-tv-feed:20210203-1
+              image: gcr.io/mirror-tv-275709/cronjobs:20210205-2
               workingDir: /cronjobs/mirror-tv
               command: ["./exec.sh"]
               args:
@@ -85,7 +87,7 @@ spec:
           serviceAccountName: ksa-feed
           containers:
             - name: mirror-tv-feed-yahoo-rss
-              image: gcr.io/mirror-tv-275709/mirror-tv-feed:20210203-1
+              image: gcr.io/mirror-tv-275709/cronjobs:20210205-2
               workingDir: /cronjobs/mirror-tv
               command: ["./exec.sh"]
               args:
@@ -105,6 +107,8 @@ kind: ServiceAccount
 metadata:
   name: ksa-schedule
   namespace: cron
+  annotations:
+    iam.gke.io/gcp-service-account: gsa-k8s-tv-dev-cron-schedule@mirror-tv-275709.iam.gserviceaccount.com
 ---
 apiVersion: batch/v1beta1
 kind: CronJob
@@ -124,7 +128,7 @@ spec:
           serviceAccountName: ksa-schedule
           containers:
             - name: mirror-tv-feed-yahoo-rss
-              image: gcr.io/mirror-tv-275709/mirror-tv-feed:20210203-1
+              image: gcr.io/mirror-tv-275709/cronjobs:20210205-2
               workingDir: /cronjobs/mirror-tv
               command: ["./exec.sh"]
               args:

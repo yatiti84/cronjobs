@@ -40,7 +40,6 @@ jupyterlab-pygments==0.1.2
 jupyterlab-widgets==1.0.0
 lazy-object-proxy==1.4.3
 libcst==0.3.16
-logging==0.4.9.6
 Mako==1.1.4
 MarkupSafe==1.1.1
 marshmallow==3.10.0
