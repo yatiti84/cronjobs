@@ -1,0 +1,37 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ksa-feed
+  namespace: cron
+---
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: feed-line-today-xml
+  namespace: cron
+spec:
+  schedule: "*/30 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: 300
+      template:
+        spec:
+          serviceAccountName: ksa-feed
+          containers:
+            - name: mirror-tv-feed-line-today-xml
+              image: gcr.io/mirror-tv-275709/mirror-tv-feed:20210122-11
+              workingDir: /feed
+              command: ["./start.sh"]
+              args:
+                - $(EXECFOLDER)
+                - $(EXECSCRIPT)
+              env:
+                - name: EXECFOLDER
+                  value: line_today_xml
+                - name: EXECSCRIPT
+                  value: generate_line_today_xml.py
+          restartPolicy: OnFailure
