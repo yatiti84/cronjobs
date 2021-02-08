@@ -19,11 +19,11 @@ RUN apt update \
 
 COPY --from=requirements /cronjobs .
 
-# install dependencies for mirror-tv's schedule
+# install dependencies for schedule
 RUN set -x \
-    && cd /cronjobs/mirror-tv/schedule \
+    && cd /cronjobs/schedule \
     && for dir in */ ; \
-    do if cd /cronjobs/mirror-tv/schedule/$dir \
+    do if cd /cronjobs/schedule/$dir \
     && python3 -m venv .venv \
     && . .venv/bin/activate \
     && pip3 install --upgrade pip \
@@ -32,11 +32,11 @@ RUN set -x \
     && deactivate; then echo "done"; else exit 1; fi ; \
     done
 
-# install dependencies for mirror-tv's feed
+# install dependencies for feed
 RUN set -x \
-    && cd /cronjobs/mirror-tv/feed \
+    && cd /cronjobs/feed \
     && for dir in */ ; \
-    do if cd /cronjobs/mirror-tv/feed/$dir \
+    do if cd /cronjobs/feed/$dir \
     && python3 -m venv .venv \
     && . .venv/bin/activate \
     && pip3 install --upgrade pip \
