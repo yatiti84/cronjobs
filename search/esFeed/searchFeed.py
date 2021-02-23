@@ -1,17 +1,14 @@
-from __future__ import print_function
 from bson import json_util
 from elasticsearch import Elasticsearch, NotFoundError
-from util import auth
 from gql import gql, Client
 from gql.transport.aiohttp import AIOHTTPTransport
+from mergedeep import merge, Strategy
 from optparse import OptionParser
-import ast
-import configparser
+from util import auth
 import datetime
 import dateutil.parser
 import json
 import math
-import os
 import re
 import sys
 import time
@@ -52,7 +49,8 @@ def main(option: dict = None):
     ''' Search-feed program starts here '''
 
     # merge option to the default options
-    option = __default_config__ | option
+    option = merge({}, __default_config__, option,
+                   strategy=Strategy.TYPESAFE_REPLACE)
 
     # Crete es instance
     global __es__
@@ -270,4 +268,4 @@ if __name__ == '__main__':
     with open(options.config, 'r') as stream:
         option = yaml.safe_load(stream)
 
-    # main(option)
+    main(option)
