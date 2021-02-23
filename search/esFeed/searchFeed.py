@@ -39,10 +39,29 @@ transport = AIOHTTPTransport(
 )
 client = Client(transport=transport, fetch_schema_from_transport=True)
 
+__default_config__ = {
+    "ELASTICSEARCH": {
+        "ENDPOINT": "",
+    },
+    "GRAPHQL": {
+        "ENDPOINT": "",
+    },
+    "SEARCHFEED": {
+        "POSTS_INDEX": "",
+        "META_INDEX": "",
+        "UNIT_DAYS": "",
+        "SAVED_FIELDS": "",
+    },
+}
 
-def main():
+
+def main(option: dict = None):
     ''' Search-feed program starts here '''
     # create search-feed indices if not exist
+
+    # merge the default options
+    option = __default_config__ | option
+
     createSearchFeedIndices()
 
     initDt = getLastUpdateDatetime()
@@ -52,10 +71,12 @@ def main():
     if len(sys.argv) == 2:
         beforeDays = float(sys.argv[1])
         total = 0
-        for i in range(int(math.ceil(beforeDays/unitDays))):
-            remainingDays = ((beforeDays - i * unitDays) % unitDays,
-                             unitDays)[(beforeDays - i * unitDays) / unitDays >= 1]
-            startDt = initDt + datetime.timedelta(days=(i * unitDays))
+        for i in range(int(math.ceil(beforeDays/option["SEARCHFEED"]["UNIT_DAYS"]))):
+            remainingDays = ((beforeDays - i * option["SEARCHFEED"]["UNIT_DAYS"]) % option["SEARCHFEED"]["UNIT_DAYS"],
+                             option["SEARCHFEED"]["UNIT_DAYS"])[(beforeDays - i * option["SEARCHFEED"]["UNIT_DAYS"]) / option["SEARCHFEED"]["UNIT_DAYS"] >= 1]
+            startDt = initDt + \
+                datetime.timedelta(
+                    days=(i * option["SEARCHFEED"]["UNIT_DAYS"]))
             endDt = startDt + datetime.timedelta(days=remainingDays)
 
             fetchedPosts = getPostsUpdatedBetween(startDt, endDt)
@@ -166,7 +187,7 @@ def clean(post):
     cleanedPost = {}
     _id = post["id"]
     state = post["state"]
-    for field in savedFields:
+    for field in option["SEARCHFEED"]["SAVED_FIELDS"]:
         cleanedPost[field] = post[field]
     if post["brief"] is not None:
         cleanedPost["brief"] = json.loads(post["brief"])["html"]
@@ -182,12 +203,13 @@ def updateElasticsearch(cleanedPost):
     title = doc["title"]
 
     if state == "published":
-        es.update(index=postsIndex, doc_type="_doc", id=_id,
+        es.update(index=option["SEARCHFEED"]["POSTS_INDEX"], doc_type="_doc", id=_id,
                   body={"doc": doc, "doc_as_upsert": True})
         print(
             "[SearchFeed] insert/update {id}: {title}".format(id=str(_id), title=title))
     else:
-        es.delete(index=postsIndex, doc_type="_doc", id=_id, ignore=[400, 404])
+        es.delete(index=option["SEARCHFEED"]["POSTS_INDEX"],
+                  doc_type="_doc", id=_id, ignore=[400, 404])
         print("[SearchFeed] delete {id}: {title}".format(
             id=str(_id), title=title))
 
@@ -200,7 +222,8 @@ def getLastUpdateDatetime():
                 beforeDays=beforeDays))
             return datetime.datetime.now() - datetime.timedelta(days=beforeDays)
 
-        meta = es.get(index=metaIndex, doc_type="_doc", id="meta")
+        meta = es.get(index=option["SEARCHFEED"]
+                      ["META_INDEX"], doc_type="_doc", id="meta")
         ts = int(meta['_source']['ts'])
         return datetime.datetime.fromtimestamp(ts / 1000) + datetime.timedelta(milliseconds=ts % 1000)
     except NotFoundError:
@@ -210,12 +233,12 @@ def getLastUpdateDatetime():
 def saveLastUpdateDatetime(dt):
     milliseconds = int(time.mktime(dt.utctimetuple())
                        * 1000 + dt.microsecond / 1000.0)
-    es.index(index=metaIndex, doc_type="_doc",
+    es.index(index=option["SEARCHFEED"]["META_INDEX"], doc_type="_doc",
              id="meta", body={"ts": str(milliseconds)})
 
 
 def createSearchFeedIndices():
-    es.indices.create(index=postsIndex, ignore=400, body={
+    es.indices.create(index=option["SEARCHFEED"]["POSTS_INDEX"], ignore=400, body={
         "mappings": {
             "_doc": {
                 "properties": {
@@ -227,7 +250,7 @@ def createSearchFeedIndices():
             }
         }
     })
-    es.indices.create(index=metaIndex, ignore=400)
+    es.indices.create(index=option["SEARCHFEED"]["META_INDEX"], ignore=400)
 
 
 # define some helpers for debug use
@@ -236,4 +259,26 @@ def pp(obj):
 
 
 if __name__ == '__main__':
-    main()
+    gqlEndpoint = config.get("GRAPHQL", "ENDPOINT")
+    esEndpoint = config.get("ELASTICSEARCH", "ENDPOINT")
+    postsIndex = config.get("SEARCHFEED", "POSTS_INDEX")
+    metaIndex = config.get("SEARCHFEED", "META_INDEX")
+    unitDays = ast.literal_eval(config.get("SEARCHFEED", "UNIT_DAYS"))
+    savedFields = ast.literal_eval(config.get("SEARCHFEED", "SAVED_FIELDS"))
+
+    option = {
+        "GRAPHQL": {
+            "ENDPOINT": gqlEndpoint,
+        },
+        "ELASTICSEARCH": {
+            "ENDPOINT": esEndpoint,
+        },
+        "SEARCHFEED": {
+            "POSTS_INDEX": postsIndex,
+            "META_INDEX": metaIndex,
+            "UNIT_DAYS": unitDays,
+            "SAVED_FIELDS": savedFields,
+        }
+    }
+
+    main(option)
