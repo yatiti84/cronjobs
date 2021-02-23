@@ -20,14 +20,17 @@ import yaml
 # prepare instances
 __es__ = None
 
-# set authentication cookie
-transport = AIOHTTPTransport(
-    url=__gqlEndpoint__,
-    headers={
-        "Cookie": auth.getAuthenticationCookie()
-    }
-)
-client = Client(transport=transport, fetch_schema_from_transport=True)
+
+def getAuthenticatedClient(gqlEndpoint: str, username: str, secret: str) -> Client:
+    """set authentication cookie"""
+    transport = AIOHTTPTransport(
+        url=gqlEndpoint,
+        headers={
+            "Cookie": auth.getAuthenticationCookie(gqlEndpoint, username, secret)
+        }
+    )
+    return Client(transport=transport, fetch_schema_from_transport=True)
+
 
 __default_config__ = {
     "ELASTICSEARCH": {
@@ -63,6 +66,9 @@ def main(option: dict = None):
     print("\n[SearchFeed] starts to update docs modified after `{dt}` to es at {current}:".format(
         dt=initDt, current=datetime.datetime.now()))
 
+    client = getAuthenticatedClient(
+        option["GRAPHQL"]["ENDPOINT"], option["GRAPHQL"]["USER"], option["GRAPHQL"]["SECRET"])
+
     if len(sys.argv) == 2:
         beforeDays = float(sys.argv[1])
         total = 0
@@ -74,12 +80,12 @@ def main(option: dict = None):
                     days=(i * option["SEARCHFEED"]["UNIT_DAYS"]))
             endDt = startDt + datetime.timedelta(days=remainingDays)
 
-            fetchedPosts = getPostsUpdatedBetween(startDt, endDt)
+            fetchedPosts = getPostsUpdatedBetween(client, startDt, endDt)
             processSearchFeed(fetchedPosts)
             total += len(fetchedPosts)
         printFinMessages(total)
     else:
-        fetchedPosts = getPostsUpdatedBetween(initDt)
+        fetchedPosts = getPostsUpdatedBetween(client, initDt)
         processSearchFeed(fetchedPosts)
         printFinMessages(len(fetchedPosts))
 
@@ -99,7 +105,7 @@ def processSearchFeed(fetchedPosts):
             fetchedPosts[-1]["updatedAt"]))
 
 
-def getPostsUpdatedBetween(startDt, endDt=None):
+def getPostsUpdatedBetween(client: Client, startDt, endDt=None):
     timeRange = "{{updatedAt_gt: \"{}\"}}".format(startDt.isoformat())
     if endDt:
         timeRange = timeRange + \
@@ -264,4 +270,4 @@ if __name__ == '__main__':
     with open(options.config, 'r') as stream:
         option = yaml.safe_load(stream)
 
-    main(option)
+    # main(option)

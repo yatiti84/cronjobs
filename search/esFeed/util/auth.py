@@ -1,21 +1,12 @@
 import requests
-import configparser
-import os
-
-config = configparser.ConfigParser()
-config.read(os.path.join(os.path.dirname(__file__), "../configs/cron.cfg"))
-
-user = config.get("GRAPHQL", "USER")
-secret = config.get("GRAPHQL", "SECRET")
-endpoint = config.get("GRAPHQL", "ENDPOINT")
 
 
-def getAuthenticationCookie():
+def getAuthenticationCookie(graphqlEndpoint: str, user: str, secret: str):
     ses = requests.Session()
     ses.headers['User-Agent'] = 'Mozilla/5'
 
     r = ses.post(
-        endpoint,
+        graphqlEndpoint,
         json={
             "operationName": "signin",
             "variables": {
