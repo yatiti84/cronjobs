@@ -1,30 +1,24 @@
 from __future__ import print_function
-import dateutil.parser
-import datetime
 from bson import json_util
-import json
-import time
 from elasticsearch import Elasticsearch, NotFoundError
+from util import auth
 from gql import gql, Client
 from gql.transport.aiohttp import AIOHTTPTransport
-from esFeed.util import auth
+from optparse import OptionParser
+import ast
 import configparser
-import sys
+import datetime
+import dateutil.parser
+import json
+import math
 import os
 import re
-import ast
-import math
-
-
-# get configuration from argv
-__config__ = configparser.ConfigParser()
-__config__.read(os.path.join(os.path.dirname(__file__), "../configs/cron.cfg"))
-
-__gqlEndpoint__ = __config__.get("GRAPHQL", "ENDPOINT")
-__esEndpoint__ = __config__.get("ELASTICSEARCH", "ENDPOINT")
+import sys
+import time
+import yaml
 
 # prepare instances
-__es__ = Elasticsearch(__esEndpoint__)
+__es__ = None
 
 # set authentication cookie
 transport = AIOHTTPTransport(
@@ -53,10 +47,15 @@ __default_config__ = {
 
 def main(option: dict = None):
     ''' Search-feed program starts here '''
-    # create search-feed indices if not exist
 
-    # merge the default options
+    # merge option to the default options
     option = __default_config__ | option
+
+    # Crete es instance
+    global __es__
+    __es__ = Elasticsearch(option["ELASTICSEARCH"]["ENDPOINT"])
+
+    # create search-feed indices if not exist
 
     createSearchFeedIndices()
 
@@ -255,27 +254,14 @@ def pp(obj):
 
 
 if __name__ == '__main__':
-    gqlEndpoint = __config__.get("GRAPHQL", "ENDPOINT")
-    esEndpoint = __config__.get("ELASTICSEARCH", "ENDPOINT")
-    postsIndex = __config__.get("SEARCHFEED", "POSTS_INDEX")
-    metaIndex = __config__.get("SEARCHFEED", "META_INDEX")
-    unitDays = ast.literal_eval(__config__.get("SEARCHFEED", "UNIT_DAYS"))
-    savedFields = ast.literal_eval(
-        __config__.get("SEARCHFEED", "SAVED_FIELDS"))
 
-    option = {
-        "GRAPHQL": {
-            "ENDPOINT": gqlEndpoint,
-        },
-        "ELASTICSEARCH": {
-            "ENDPOINT": esEndpoint,
-        },
-        "SEARCHFEED": {
-            "POSTS_INDEX": postsIndex,
-            "META_INDEX": metaIndex,
-            "UNIT_DAYS": unitDays,
-            "SAVED_FIELDS": savedFields,
-        }
-    }
+    parser = OptionParser()
+    parser.add_option("-c", "--config", dest="config",
+                      help="config file for searchFeed", metavar="FILE")
+
+    (options, args) = parser.parse_args()
+
+    with open(options.config, 'r') as stream:
+        option = yaml.safe_load(stream)
 
     main(option)
