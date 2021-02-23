@@ -17,22 +17,18 @@ import math
 
 
 # get configuration from argv
-config = configparser.ConfigParser()
-config.read(os.path.join(os.path.dirname(__file__), "../configs/cron.cfg"))
+__config__ = configparser.ConfigParser()
+__config__.read(os.path.join(os.path.dirname(__file__), "../configs/cron.cfg"))
 
-gqlEndpoint = config.get("GRAPHQL", "ENDPOINT")
-esEndpoint = config.get("ELASTICSEARCH", "ENDPOINT")
-postsIndex = config.get("SEARCHFEED", "POSTS_INDEX")
-metaIndex = config.get("SEARCHFEED", "META_INDEX")
-unitDays = ast.literal_eval(config.get("SEARCHFEED", "UNIT_DAYS"))
-savedFields = ast.literal_eval(config.get("SEARCHFEED", "SAVED_FIELDS"))
+__gqlEndpoint__ = __config__.get("GRAPHQL", "ENDPOINT")
+__esEndpoint__ = __config__.get("ELASTICSEARCH", "ENDPOINT")
 
 # prepare instances
-es = Elasticsearch(esEndpoint)
+__es__ = Elasticsearch(__esEndpoint__)
 
 # set authentication cookie
 transport = AIOHTTPTransport(
-    url=gqlEndpoint,
+    url=__gqlEndpoint__,
     headers={
         "Cookie": auth.getAuthenticationCookie()
     }
@@ -203,13 +199,13 @@ def updateElasticsearch(cleanedPost):
     title = doc["title"]
 
     if state == "published":
-        es.update(index=option["SEARCHFEED"]["POSTS_INDEX"], doc_type="_doc", id=_id,
-                  body={"doc": doc, "doc_as_upsert": True})
+        __es__.update(index=option["SEARCHFEED"]["POSTS_INDEX"], doc_type="_doc", id=_id,
+                      body={"doc": doc, "doc_as_upsert": True})
         print(
             "[SearchFeed] insert/update {id}: {title}".format(id=str(_id), title=title))
     else:
-        es.delete(index=option["SEARCHFEED"]["POSTS_INDEX"],
-                  doc_type="_doc", id=_id, ignore=[400, 404])
+        __es__.delete(index=option["SEARCHFEED"]["POSTS_INDEX"],
+                      doc_type="_doc", id=_id, ignore=[400, 404])
         print("[SearchFeed] delete {id}: {title}".format(
             id=str(_id), title=title))
 
@@ -222,8 +218,8 @@ def getLastUpdateDatetime():
                 beforeDays=beforeDays))
             return datetime.datetime.now() - datetime.timedelta(days=beforeDays)
 
-        meta = es.get(index=option["SEARCHFEED"]
-                      ["META_INDEX"], doc_type="_doc", id="meta")
+        meta = __es__.get(index=option["SEARCHFEED"]
+                          ["META_INDEX"], doc_type="_doc", id="meta")
         ts = int(meta['_source']['ts'])
         return datetime.datetime.fromtimestamp(ts / 1000) + datetime.timedelta(milliseconds=ts % 1000)
     except NotFoundError:
@@ -233,12 +229,12 @@ def getLastUpdateDatetime():
 def saveLastUpdateDatetime(dt):
     milliseconds = int(time.mktime(dt.utctimetuple())
                        * 1000 + dt.microsecond / 1000.0)
-    es.index(index=option["SEARCHFEED"]["META_INDEX"], doc_type="_doc",
-             id="meta", body={"ts": str(milliseconds)})
+    __es__.index(index=option["SEARCHFEED"]["META_INDEX"], doc_type="_doc",
+                 id="meta", body={"ts": str(milliseconds)})
 
 
 def createSearchFeedIndices():
-    es.indices.create(index=option["SEARCHFEED"]["POSTS_INDEX"], ignore=400, body={
+    __es__.indices.create(index=option["SEARCHFEED"]["POSTS_INDEX"], ignore=400, body={
         "mappings": {
             "_doc": {
                 "properties": {
@@ -250,7 +246,7 @@ def createSearchFeedIndices():
             }
         }
     })
-    es.indices.create(index=option["SEARCHFEED"]["META_INDEX"], ignore=400)
+    __es__.indices.create(index=option["SEARCHFEED"]["META_INDEX"], ignore=400)
 
 
 # define some helpers for debug use
@@ -259,12 +255,13 @@ def pp(obj):
 
 
 if __name__ == '__main__':
-    gqlEndpoint = config.get("GRAPHQL", "ENDPOINT")
-    esEndpoint = config.get("ELASTICSEARCH", "ENDPOINT")
-    postsIndex = config.get("SEARCHFEED", "POSTS_INDEX")
-    metaIndex = config.get("SEARCHFEED", "META_INDEX")
-    unitDays = ast.literal_eval(config.get("SEARCHFEED", "UNIT_DAYS"))
-    savedFields = ast.literal_eval(config.get("SEARCHFEED", "SAVED_FIELDS"))
+    gqlEndpoint = __config__.get("GRAPHQL", "ENDPOINT")
+    esEndpoint = __config__.get("ELASTICSEARCH", "ENDPOINT")
+    postsIndex = __config__.get("SEARCHFEED", "POSTS_INDEX")
+    metaIndex = __config__.get("SEARCHFEED", "META_INDEX")
+    unitDays = ast.literal_eval(__config__.get("SEARCHFEED", "UNIT_DAYS"))
+    savedFields = ast.literal_eval(
+        __config__.get("SEARCHFEED", "SAVED_FIELDS"))
 
     option = {
         "GRAPHQL": {
