@@ -7,14 +7,13 @@ import time
 from elasticsearch import Elasticsearch, NotFoundError
 from gql import gql, Client
 from gql.transport.aiohttp import AIOHTTPTransport
-import auth
+from esFeed.util import auth
 import configparser
 import sys
 import os
 import re
 import ast
 import math
-sys.path.insert(1, os.path.join(os.path.dirname(__file__), "../utils"))
 
 
 # get configuration from argv
