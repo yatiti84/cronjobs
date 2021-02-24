@@ -50,11 +50,11 @@ steps:
     image: plugins/gcr
     settings:
       repo: mirror-tv-275709/${DRONE_REPO_NAME}
-      tag: ${DRONE_BRANCH}_${DRONE_COMMIT_AUTHOR}_${DRONE_BUILD_NUMBER}_cms
+      tag: ${DRONE_BRANCH}_${DRONE_COMMIT_AUTHOR}_${DRONE_BUILD_NUMBER}
+      json_key:
+        from_secret: google_credentials
     environment:
       DOCKER_LAUNCH_DEBUG: "true"
-      GOOGLE_CREDENTIALS:
-        from_secret: google_credentials
     when:
       branch:
         - dev
