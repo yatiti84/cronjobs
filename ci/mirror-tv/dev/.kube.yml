@@ -192,5 +192,5 @@ spec:
           volumes:
             - name: configmap
               configMap:
-                name: esFeed-config
+                name: es-feed-config
           restartPolicy: OnFailure
