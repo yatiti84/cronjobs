@@ -175,6 +175,9 @@ spec:
             - name: mirror-tv-search-es-feed
               image: "{{.image}}"
               workingDir: /cronjobs
+              volumeMounts:
+                - name: es-feed-config-vol
+                  mountPath: /cronjobs/config
               command: ["./exec.sh"]
               args:
                 - $(EXECFOLDER)
@@ -186,11 +189,11 @@ spec:
                 - name: EXECSCRIPT
                   value: searchFeed.py
                 - name: ARG
-                  value: "--config ./config.yaml"
+                  value: "--config ./config/config.yaml"
               terminationMessagePath: /dev/termination-log
               terminationMessagePolicy: File
           volumes:
-            - name: configmap
+            - name: es-feed-config-vol
               configMap:
                 name: es-feed-config
           restartPolicy: OnFailure
