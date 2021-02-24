@@ -39,8 +39,8 @@ __default_config__ = {
     "SEARCHFEED": {
         "POSTS_INDEX": "",
         "META_INDEX": "",
-        "UNIT_DAYS": "",
-        "SAVED_FIELDS": "",
+        "UNIT_DAYS": 100,
+        "SAVED_FIELDS": [],
     },
 }
 
