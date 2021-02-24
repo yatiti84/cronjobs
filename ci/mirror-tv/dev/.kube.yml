@@ -177,7 +177,7 @@ spec:
               workingDir: /cronjobs
               volumeMounts:
                 - name: es-feed-config-vol
-                  mountPath: /cronjobs/config
+                  mountPath: /cronjobs/search/esFeed/config
               command: ["./exec.sh"]
               args:
                 - $(EXECFOLDER)
