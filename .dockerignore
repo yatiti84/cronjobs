@@ -1,2 +1,5 @@
 **/.venv
 **/.*
+
+# folder used for intermediate data
+dockerignore

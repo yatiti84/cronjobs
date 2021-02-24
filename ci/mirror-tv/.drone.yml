@@ -50,11 +50,11 @@ steps:
     image: plugins/gcr
     settings:
       repo: mirror-tv-275709/${DRONE_REPO_NAME}
-      tag: ${DRONE_BRANCH}_${DRONE_COMMIT_AUTHOR}_${DRONE_BUILD_NUMBER}_cms
+      tag: ${DRONE_BRANCH}_${DRONE_COMMIT_AUTHOR}_${DRONE_BUILD_NUMBER}
+      json_key:
+        from_secret: google_credentials
     environment:
       DOCKER_LAUNCH_DEBUG: "true"
-      GOOGLE_CREDENTIALS:
-        from_secret: google_credentials
     when:
       branch:
         - dev
@@ -87,7 +87,7 @@ steps:
     settings:
       channel: jenkins
       icon_url: https://avatars2.githubusercontent.com/u/2181346?s=200&v=4
-      template: "{{#success build.status}}\n  *success* ${DRONE_REPO_NAME}:${DRONE_BRANCH}_${DRONE_COMMIT_AUTHOR}_${DRONE_BUILD_NUMBER} was well served.\n  Check out our new <http://cms-dev.mnews.tw/admin|TVStone>.\n{{else}}\n  Houston, we have a problem. Build <${DRONE_BUILD_LINK}|#{{build.number}}> failed.\n{{/success}}\n"
+      template: "{{#success build.status}}\n  *success* ${DRONE_REPO_NAME}:${DRONE_BRANCH}_${DRONE_COMMIT_AUTHOR}_${DRONE_BUILD_NUMBER} was well served.\n{{else}}\n  Houston, we have a problem. Build <${DRONE_BUILD_LINK}|#{{build.number}}> failed.\n{{/success}}\n"
       username: drone
     environment:
       SLACK_WEBHOOK:
