@@ -100,7 +100,7 @@ steps:
     pull: if-not-exists
     image: nytimes/drone-gke
     settings:
-      cluster: tv-Stag
+      cluster: tv-stag
       namespace: cron
       vars:
         app: ${DRONE_REPO_NAME}
