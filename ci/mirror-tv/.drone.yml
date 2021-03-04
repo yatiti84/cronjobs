@@ -17,7 +17,7 @@ steps:
     settings:
       channel: jenkins
       icon_url: https://avatars2.githubusercontent.com/u/2181346?s=200&v=4
-      template: "*start* building *{{repo.name}}* <${DRONE_BUILD_LINK}|#{{build.number}}>. *${DRONE_COMMIT_AUTHOR}* gave *{{build.branch}}* a little push.\n"
+      template: "*start* building *{{repo.name}}* <${DRONE_BUILD_LINK}|#{{build.number}}>. Someone gave *{{build.branch}}* a little push.\n"
       username: drone
     environment:
       SLACK_WEBHOOK:
