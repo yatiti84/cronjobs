@@ -1,0 +1,141 @@
+---
+kind: pipeline
+type: docker
+name: default
+
+platform:
+  os: linux
+  arch: amd64
+
+workspace:
+  path: /cronjobs
+
+steps:
+  - name: startSlack
+    pull: if-not-exists
+    image: plugins/slack
+    settings:
+      channel: jenkins
+      icon_url: https://avatars2.githubusercontent.com/u/2181346?s=200&v=4
+      template: "*start* building *{{repo.name}}* <${DRONE_BUILD_LINK}|#{{build.number}}>. *${DRONE_COMMIT_AUTHOR}* gave *{{build.branch}}* a little push.\n"
+      username: drone
+    environment:
+      SLACK_WEBHOOK:
+        from_secret: slack_webhook
+    when:
+      branch:
+        - main
+        - dev
+      event:
+        - push
+
+  - name: prepareDevEnv
+    pull: if-not-exists
+    image: gcr.io/mirror-tv-275709/drone-cloud-sdk:mirror-tv
+    commands:
+      - gcloud source repos clone configs ./dockerignore/gcr_configs
+      - echo "---" >> ./ci/mirror-tv/dev/.kube.yml && cat ./dockerignore/gcr_configs/cronjobs/search/esFeed/configmap.yml >> ./ci/mirror-tv/dev/.kube.yml
+      - ln -s ./ci/mirror-tv/dev/.kube.yml .kube.yml
+    environment:
+      GOOGLE_CREDENTIALS:
+        from_secret: google_credentials
+    when:
+      branch:
+        - dev
+      event:
+        - push
+
+  - name: prepareMainEnv
+    pull: if-not-exists
+    image: gcr.io/mirror-tv-275709/drone-cloud-sdk:mirror-tv
+    commands:
+      - ln -s ./ci/mirror-tv/staging/.kube.yml .kube.yml
+    environment:
+      GOOGLE_CREDENTIALS:
+        from_secret: google_credentials
+    when:
+      branch:
+        - main
+      event:
+        - push
+
+  - name: buildThenPublish
+    pull: if-not-exists
+    image: plugins/gcr
+    settings:
+      repo: mirror-tv-275709/${DRONE_REPO_NAME}
+      tag: ${DRONE_BRANCH}_${DRONE_COMMIT_AUTHOR}_${DRONE_BUILD_NUMBER}
+      json_key:
+        from_secret: google_credentials
+    environment:
+      DOCKER_LAUNCH_DEBUG: "true"
+    when:
+      branch:
+        - dev
+        - main
+      event:
+        - push
+
+  - name: deployDev
+    pull: if-not-exists
+    image: nytimes/drone-gke
+    settings:
+      cluster: tv-dev
+      namespace: cron
+      vars:
+        app: ${DRONE_REPO_NAME}
+        image: gcr.io/mirror-tv-275709/${DRONE_REPO_NAME}:${DRONE_BRANCH}_${DRONE_COMMIT_AUTHOR}_${DRONE_BUILD_NUMBER}
+      verbose: true
+      zone: asia-east1-c
+    environment:
+      TOKEN:
+        from_secret: google_credentials
+    when:
+      branch:
+        - dev
+      event:
+        - push
+
+  - name: deployStaging
+    pull: if-not-exists
+    image: nytimes/drone-gke
+    settings:
+      cluster: tv-Stag
+      namespace: cron
+      vars:
+        app: ${DRONE_REPO_NAME}
+        image: gcr.io/mirror-tv-275709/${DRONE_REPO_NAME}:${DRONE_BRANCH}_${DRONE_COMMIT_AUTHOR}_${DRONE_BUILD_NUMBER}
+      verbose: true
+      zone: asia-east1-c
+    environment:
+      TOKEN:
+        from_secret: google_credentials
+    when:
+      branch:
+        - main
+      event:
+        - push
+
+  - name: finishSlack
+    pull: if-not-exists
+    image: plugins/slack
+    settings:
+      channel: jenkins
+      icon_url: https://avatars2.githubusercontent.com/u/2181346?s=200&v=4
+      template: "{{#success build.status}}\n  *success* ${DRONE_REPO_NAME}:${DRONE_BRANCH}_${DRONE_COMMIT_AUTHOR}_${DRONE_BUILD_NUMBER} was well served.\n{{else}}\n  Houston, we have a problem. Build <${DRONE_BUILD_LINK}|#{{build.number}}> failed.\n{{/success}}\n"
+      username: drone
+    environment:
+      SLACK_WEBHOOK:
+        from_secret: slack_webhook
+    when:
+      branch:
+        - main
+        - dev
+      event:
+        - push
+      status:
+        - success
+        - failure
+
+image_pull_secrets:
+  - gcr_docker_config
