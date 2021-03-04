@@ -1,4 +1,4 @@
-FROM python:3.9-slim AS requirements
+FROM python:3.8-slim AS requirements
 
 WORKDIR /cronjobs
 
@@ -6,7 +6,7 @@ COPY . .
 
 RUN find . -type f -not -name 'requirements.txt' -exec rm -rfv '{}' \;
 
-FROM python:3.9-slim AS build
+FROM python:3.8-slim AS build
 
 WORKDIR /cronjobs
 
@@ -58,7 +58,7 @@ RUN set -x \
     && deactivate; then echo "done"; else exit 1; fi ; \
     done
 
-FROM python:3.9-slim
+FROM python:3.8-slim
 
 WORKDIR /cronjobs
 
