@@ -199,18 +199,18 @@ def updateElasticsearch(cleanedPost):
     _id = cleanedPost["_id"]
     state = cleanedPost["state"]
     doc = cleanedPost["doc"]
-    title = doc["name"]
+    name = doc["name"]
 
     if state == "published":
         __es__.update(index=option["SEARCHFEED"]["POSTS_INDEX"], doc_type="_doc", id=_id,
                       body={"doc": doc, "doc_as_upsert": True})
         print(
-            "[SearchFeed] insert/update {id}: {title}".format(id=str(_id), title=title))
+            "[SearchFeed] insert/update {id}: {name}".format(id=str(_id), name=name))
     else:
         __es__.delete(index=option["SEARCHFEED"]["POSTS_INDEX"],
                       doc_type="_doc", id=_id, ignore=[400, 404])
-        print("[SearchFeed] delete {id}: {title}".format(
-            id=str(_id), title=title))
+        print("[SearchFeed] delete {id}: {name}".format(
+            id=str(_id), name=name))
 
 
 def getLastUpdateDatetime():
