@@ -154,8 +154,8 @@ def getPostsUpdatedBetween(client: Client, startDt, endDt=None):
                 }
                 heroCaption
                 style
-                brief
-                content
+                briefHtml
+                contentHtml
                 topics {
                     name
                     subtitle
@@ -187,11 +187,12 @@ def clean(post):
     _id = post["id"]
     state = post["state"]
     for field in option["SEARCHFEED"]["SAVED_FIELDS"]:
-        cleanedPost[field] = post[field]
-    if post["brief"] is not None:
-        cleanedPost["brief"] = json.loads(post["brief"])["html"]
-    if post["content"] is not None:
-        cleanedPost["content"] = json.loads(post["content"])['html']
+        try:
+            cleanedPost[field] = post[field]
+        except KeyError:
+            print(
+                f"[SearchFeed] id({_id}) post doesn't have field: {field}\n")
+
     return {"_id": _id, "state": state, "doc": cleanedPost}
 
 
