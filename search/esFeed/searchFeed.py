@@ -115,12 +115,12 @@ def getPostsUpdatedBetween(client: Client, startDt, endDt=None):
             allPosts(where: { AND: [ { OR: [{isAdvertised: null}, {isAdvertised: false}]}, %s ] }) {
                 id
                 slug
-                title
+                name
                 subtitle
                 state
                 publishTime
                 categories {
-                    title
+                    name
                     ogTitle
                     ogDescription
                 }
@@ -144,11 +144,11 @@ def getPostsUpdatedBetween(client: Client, startDt, endDt=None):
                 }
                 otherbyline
                 heroVideo {
-                    title
+                    name
                     description
                 }
                 heroImage {
-                    title
+                    name
                     keywords
                     urlMobileSized
                 }
@@ -157,7 +157,7 @@ def getPostsUpdatedBetween(client: Client, startDt, endDt=None):
                 brief
                 content
                 topics {
-                    title
+                    name
                     subtitle
                 }
                 tags {
@@ -166,12 +166,12 @@ def getPostsUpdatedBetween(client: Client, startDt, endDt=None):
                     ogDescription
                 }
                 audio {
-                    title
+                    name
                 }
                 ogTitle
                 ogDescription
                 ogImage {
-                    title
+                    name
                     keywords
                 }
                 updatedAt
@@ -199,7 +199,7 @@ def updateElasticsearch(cleanedPost):
     _id = cleanedPost["_id"]
     state = cleanedPost["state"]
     doc = cleanedPost["doc"]
-    title = doc["title"]
+    title = doc["name"]
 
     if state == "published":
         __es__.update(index=option["SEARCHFEED"]["POSTS_INDEX"], doc_type="_doc", id=_id,
