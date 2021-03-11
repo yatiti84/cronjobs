@@ -127,7 +127,7 @@ spec:
         spec:
           serviceAccountName: ksa-schedule
           containers:
-            - name: mirror-tv-feed-yahoo-rss
+            - name: mirror-tv-scheduled-editor-choices
               image: "{{.image}}"
               workingDir: /cronjobs
               command: ["./exec.sh"]
