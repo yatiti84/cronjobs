@@ -61,7 +61,7 @@ def main(option: dict = None):
     createSearchFeedIndices()
 
     initDt = getLastUpdateDatetime()
-    print("\n[SearchFeed] starts to update docs modified after `{dt}` to es at {current}:".format(
+    print("[SearchFeed] starts to update docs modified after `{dt}` to es at {current}:\n".format(
         dt=initDt, current=datetime.datetime.now()))
 
     client = getAuthenticatedClient(
@@ -90,8 +90,9 @@ def main(option: dict = None):
 
 def printFinMessages(fetchedPostsCount):
     print(
-        "Search-feed done at {current}!".format(current=datetime.datetime.now()))
-    print("{count} docs handled.".format(count=fetchedPostsCount))
+        "[SearchFeed] Search-feed done at {current}!\n".format(current=datetime.datetime.now()))
+    print("[SearchFeed] {count} docs handled.\n".format(
+        count=fetchedPostsCount))
 
 
 def processSearchFeed(fetchedPosts):
@@ -115,12 +116,12 @@ def getPostsUpdatedBetween(client: Client, startDt, endDt=None):
             allPosts(where: { AND: [ { OR: [{isAdvertised: null}, {isAdvertised: false}]}, %s ] }) {
                 id
                 slug
-                title
+                name
                 subtitle
                 state
                 publishTime
                 categories {
-                    title
+                    name
                     ogTitle
                     ogDescription
                 }
@@ -144,20 +145,20 @@ def getPostsUpdatedBetween(client: Client, startDt, endDt=None):
                 }
                 otherbyline
                 heroVideo {
-                    title
+                    name
                     description
                 }
                 heroImage {
-                    title
+                    name
                     keywords
                     urlMobileSized
                 }
                 heroCaption
                 style
-                brief
-                content
+                briefHtml
+                contentHtml
                 topics {
-                    title
+                    name
                     subtitle
                 }
                 tags {
@@ -166,12 +167,12 @@ def getPostsUpdatedBetween(client: Client, startDt, endDt=None):
                     ogDescription
                 }
                 audio {
-                    title
+                    name
                 }
                 ogTitle
                 ogDescription
                 ogImage {
-                    title
+                    name
                     keywords
                 }
                 updatedAt
@@ -187,11 +188,12 @@ def clean(post):
     _id = post["id"]
     state = post["state"]
     for field in option["SEARCHFEED"]["SAVED_FIELDS"]:
-        cleanedPost[field] = post[field]
-    if post["brief"] is not None:
-        cleanedPost["brief"] = json.loads(post["brief"])["html"]
-    if post["content"] is not None:
-        cleanedPost["content"] = json.loads(post["content"])['html']
+        try:
+            cleanedPost[field] = post[field]
+        except KeyError:
+            print(
+                f"[SearchFeed] id({_id}) post doesn't have field: {field}\n")
+
     return {"_id": _id, "state": state, "doc": cleanedPost}
 
 
@@ -199,25 +201,25 @@ def updateElasticsearch(cleanedPost):
     _id = cleanedPost["_id"]
     state = cleanedPost["state"]
     doc = cleanedPost["doc"]
-    title = doc["title"]
+    name = doc["name"]
 
     if state == "published":
         __es__.update(index=option["SEARCHFEED"]["POSTS_INDEX"], doc_type="_doc", id=_id,
                       body={"doc": doc, "doc_as_upsert": True})
         print(
-            "[SearchFeed] insert/update {id}: {title}".format(id=str(_id), title=title))
+            "[SearchFeed] insert/update {id}: {name}\n".format(id=str(_id), name=name))
     else:
         __es__.delete(index=option["SEARCHFEED"]["POSTS_INDEX"],
                       doc_type="_doc", id=_id, ignore=[400, 404])
-        print("[SearchFeed] delete {id}: {title}".format(
-            id=str(_id), title=title))
+        print("[SearchFeed] delete {id}: {name}\n".format(
+            id=str(_id), name=name))
 
 
 def getLastUpdateDatetime():
     try:
         if len(sys.argv) == 2:
             beforeDays = float(sys.argv[1])
-            print("\n[SearchFeed] recieved a time param. Will fetch posts started from `{beforeDays}` days ago!".format(
+            print("[SearchFeed] recieved a time param. Will fetch posts started from `{beforeDays}` days ago!\n".format(
                 beforeDays=beforeDays))
             return datetime.datetime.now() - datetime.timedelta(days=beforeDays)
 
@@ -254,7 +256,7 @@ def createSearchFeedIndices():
 
 # define some helpers for debug use
 def pp(obj):
-    print(json_util.dumps(obj, indent=2))
+    print(json_util.dumps(obj, indent=2) + "\n")
 
 
 if __name__ == '__main__':
