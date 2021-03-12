@@ -34,8 +34,7 @@ steps:
     image: gcr.io/mirror-tv-275709/drone-cloud-sdk:mirror-tv
     commands:
       - gcloud source repos clone configs ./dockerignore/gcr_configs
-      - echo "---" >> ./ci/mirror-tv/dev/.kube.yml && cat ./dockerignore/gcr_configs/cronjobs/dev/config/search/esFeed/configmap.yml >> ./ci/mirror-tv/dev/.kube.yml
-      - ln -s ./ci/mirror-tv/dev/.kube.yml .kube.yml
+      - cp ./dockerignore/gcr_configs/cronjobs/dev/.kube.yml ./.kube.yml
     environment:
       GOOGLE_CREDENTIALS:
         from_secret: google_credentials
@@ -49,7 +48,7 @@ steps:
     pull: if-not-exists
     image: gcr.io/mirror-tv-275709/drone-cloud-sdk:mirror-tv
     commands:
-      - ln -s ./ci/mirror-tv/staging/.kube.yml .kube.yml
+      - cp ./dockerignore/gcr_configs/cronjobs/staging/.kube.yml ./.kube.yml
     environment:
       GOOGLE_CREDENTIALS:
         from_secret: google_credentials
