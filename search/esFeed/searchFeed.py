@@ -3,8 +3,8 @@ from elasticsearch import Elasticsearch, NotFoundError
 from gql import gql, Client
 from gql.transport.aiohttp import AIOHTTPTransport
 from mergedeep import merge, Strategy
-from optparse import OptionParser
 from util import auth
+import argparse
 import datetime
 import dateutil.parser
 import json
@@ -45,7 +45,7 @@ __default_config__ = {
 }
 
 
-def main(option: dict = None):
+def main(option: dict = None, beforeDays: int = None):
     ''' Search-feed program starts here '''
 
     # merge option to the default options
@@ -62,15 +62,14 @@ def main(option: dict = None):
 
     createSearchFeedIndices(option)
 
-    initDt = getLastUpdateDatetime(option)
+    initDt = getLastUpdateDatetime(option, beforeDays)
     print("[SearchFeed] starts to update docs modified after `{dt}` to es at {current}:\n".format(
         dt=initDt, current=datetime.datetime.now()))
 
     client = getAuthenticatedClient(
         option["GRAPHQL"]["ENDPOINT"], option["GRAPHQL"]["USER"], option["GRAPHQL"]["SECRET"])
 
-    if len(sys.argv) == 2:
-        beforeDays = float(sys.argv[1])
+    if beforeDays is not None:
         total = 0
         for i in range(int(math.ceil(beforeDays/option["SEARCHFEED"]["UNIT_DAYS"]))):
             remainingDays = ((beforeDays - i * option["SEARCHFEED"]["UNIT_DAYS"]) % option["SEARCHFEED"]["UNIT_DAYS"],
@@ -217,10 +216,9 @@ def updateElasticsearch(cleanedPost, option: dict = None):
             id=str(_id), name=name))
 
 
-def getLastUpdateDatetime(option: dict = None):
+def getLastUpdateDatetime(option: dict = None, beforeDays: int = None):
     try:
-        if len(sys.argv) == 2:
-            beforeDays = float(sys.argv[1])
+        if beforeDays is not None:
             print("[SearchFeed] recieved a time param. Will fetch posts started from `{beforeDays}` days ago!\n".format(
                 beforeDays=beforeDays))
             return datetime.datetime.now() - datetime.timedelta(days=beforeDays)
@@ -263,13 +261,20 @@ def pp(obj):
 
 if __name__ == '__main__':
 
-    parser = OptionParser()
-    parser.add_option("-c", "--config", dest="config",
-                      help="config file for searchFeed", metavar="FILE")
+    parser = argparse.ArgumentParser(
+        description='Process configuration of esFeed')
+    parser.add_argument("-c", "--config", dest="config",
+                        help="config file for searchFeed", metavar="FILE")
+    parser.add_argument("-b", "--before-days", dest="beforeDays",
+                        help="start search from specific days before", metavar="N", type=int)
 
-    (options, args) = parser.parse_args()
+    args = parser.parse_args()
 
-    with open(options.config, 'r') as stream:
+    with open(args.config, 'r') as stream:
         option = yaml.safe_load(stream)
 
-    main(option)
+    print(args)
+
+    exit(0)
+
+    main(option, args.beforeDays)
