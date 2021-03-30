@@ -271,8 +271,4 @@ if __name__ == '__main__':
     with open(args.config, 'r') as stream:
         option = yaml.safe_load(stream)
 
-    print(args)
-
-    exit(0)
-
     main(option, args.beforeDays)
