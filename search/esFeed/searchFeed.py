@@ -52,8 +52,6 @@ def main(option: dict = None, beforeDays: int = None):
     option = merge({}, __default_config__, option,
                    strategy=Strategy.TYPESAFE_REPLACE)
 
-    print(f'config:{option}')
-
     # Crete es instance
     global __es__
     __es__ = Elasticsearch(option["ELASTICSEARCH"]["ENDPOINT"])
