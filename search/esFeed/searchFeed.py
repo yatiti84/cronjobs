@@ -3,7 +3,6 @@ from elasticsearch import Elasticsearch, NotFoundError
 from gql import gql, Client
 from gql.transport.aiohttp import AIOHTTPTransport
 from mergedeep import merge, Strategy
-from optparse import OptionParser
 from util import auth
 import datetime
 import dateutil.parser
@@ -45,7 +44,7 @@ __default_config__ = {
 }
 
 
-def main(option: dict = None):
+def main(option: dict = None, beforeDays: int = None):
     ''' Search-feed program starts here '''
 
     # merge option to the default options
@@ -263,13 +262,16 @@ def pp(obj):
 
 if __name__ == '__main__':
 
-    parser = OptionParser()
-    parser.add_option("-c", "--config", dest="config",
-                      help="config file for searchFeed", metavar="FILE")
+    parser = argparse.ArgumentParser(
+        description='Process configuration of esFeed')
+    parser.add_argument("-c", "--config", dest="config",
+                        help="config file for searchFeed", metavar="FILE")
+    parser.add_argument("-b", "--before-days", dest="beforeDays",
+                        help="start search from specific days before", metavar="N", type=int)
 
-    (options, args) = parser.parse_args()
+    args = parser.parse_args()
 
-    with open(options.config, 'r') as stream:
+    with open(args.config, 'r') as stream:
         option = yaml.safe_load(stream)
 
-    main(option)
+    main(option, args.beforeDays)
