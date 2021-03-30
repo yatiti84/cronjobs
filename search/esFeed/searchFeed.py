@@ -52,15 +52,17 @@ def main(option: dict = None):
     option = merge({}, __default_config__, option,
                    strategy=Strategy.TYPESAFE_REPLACE)
 
+    print(f'config:{option}')
+
     # Crete es instance
     global __es__
     __es__ = Elasticsearch(option["ELASTICSEARCH"]["ENDPOINT"])
 
     # create search-feed indices if not exist
 
-    createSearchFeedIndices()
+    createSearchFeedIndices(option)
 
-    initDt = getLastUpdateDatetime()
+    initDt = getLastUpdateDatetime(option)
     print("[SearchFeed] starts to update docs modified after `{dt}` to es at {current}:\n".format(
         dt=initDt, current=datetime.datetime.now()))
 
@@ -79,12 +81,12 @@ def main(option: dict = None):
             endDt = startDt + datetime.timedelta(days=remainingDays)
 
             fetchedPosts = getPostsUpdatedBetween(client, startDt, endDt)
-            processSearchFeed(fetchedPosts)
+            processSearchFeed(fetchedPosts, option)
             total += len(fetchedPosts)
         printFinMessages(total)
     else:
         fetchedPosts = getPostsUpdatedBetween(client, initDt)
-        processSearchFeed(fetchedPosts)
+        processSearchFeed(fetchedPosts, option)
         printFinMessages(len(fetchedPosts))
 
 
@@ -95,13 +97,13 @@ def printFinMessages(fetchedPostsCount):
         count=fetchedPostsCount))
 
 
-def processSearchFeed(fetchedPosts):
+def processSearchFeed(fetchedPosts, option):
     for post in fetchedPosts:
-        cleanedPost = clean(post)
-        updateElasticsearch(cleanedPost)
+        cleanedPost = clean(post, option)
+        updateElasticsearch(cleanedPost, option)
     if len(fetchedPosts) > 0:
         saveLastUpdateDatetime(dateutil.parser.isoparse(
-            fetchedPosts[-1]["updatedAt"]))
+            fetchedPosts[-1]["updatedAt"]), option)
 
 
 def getPostsUpdatedBetween(client: Client, startDt, endDt=None):
@@ -183,7 +185,7 @@ def getPostsUpdatedBetween(client: Client, startDt, endDt=None):
     return client.execute(getScheduledItemsQuery)["allPosts"]
 
 
-def clean(post):
+def clean(post, option: dict = None):
     cleanedPost = {}
     _id = post["id"]
     state = post["state"]
@@ -197,7 +199,7 @@ def clean(post):
     return {"_id": _id, "state": state, "doc": cleanedPost}
 
 
-def updateElasticsearch(cleanedPost):
+def updateElasticsearch(cleanedPost, option: dict = None):
     _id = cleanedPost["_id"]
     state = cleanedPost["state"]
     doc = cleanedPost["doc"]
@@ -215,7 +217,7 @@ def updateElasticsearch(cleanedPost):
             id=str(_id), name=name))
 
 
-def getLastUpdateDatetime():
+def getLastUpdateDatetime(option: dict = None):
     try:
         if len(sys.argv) == 2:
             beforeDays = float(sys.argv[1])
@@ -231,14 +233,14 @@ def getLastUpdateDatetime():
         return datetime.datetime.now() - datetime.timedelta(minutes=5)
 
 
-def saveLastUpdateDatetime(dt):
+def saveLastUpdateDatetime(dt, option: dict = None):
     milliseconds = int(time.mktime(dt.utctimetuple())
                        * 1000 + dt.microsecond / 1000.0)
     __es__.index(index=option["SEARCHFEED"]["META_INDEX"], doc_type="_doc",
                  id="meta", body={"ts": str(milliseconds)})
 
 
-def createSearchFeedIndices():
+def createSearchFeedIndices(option: dict = None):
     __es__.indices.create(index=option["SEARCHFEED"]["POSTS_INDEX"], ignore=400, body={
         "mappings": {
             "_doc": {
