@@ -4,6 +4,7 @@ from gql import gql, Client
 from gql.transport.aiohttp import AIOHTTPTransport
 from mergedeep import merge, Strategy
 from util import auth
+import argparse
 import datetime
 import dateutil.parser
 import json
@@ -61,15 +62,14 @@ def main(option: dict = None, beforeDays: int = None):
 
     createSearchFeedIndices(option)
 
-    initDt = getLastUpdateDatetime(option)
+    initDt = getLastUpdateDatetime(option, beforeDays)
     print("[SearchFeed] starts to update docs modified after `{dt}` to es at {current}:\n".format(
         dt=initDt, current=datetime.datetime.now()))
 
     client = getAuthenticatedClient(
         option["GRAPHQL"]["ENDPOINT"], option["GRAPHQL"]["USER"], option["GRAPHQL"]["SECRET"])
 
-    if len(sys.argv) == 2:
-        beforeDays = float(sys.argv[1])
+    if beforeDays is not None:
         total = 0
         for i in range(int(math.ceil(beforeDays/option["SEARCHFEED"]["UNIT_DAYS"]))):
             remainingDays = ((beforeDays - i * option["SEARCHFEED"]["UNIT_DAYS"]) % option["SEARCHFEED"]["UNIT_DAYS"],
@@ -216,10 +216,9 @@ def updateElasticsearch(cleanedPost, option: dict = None):
             id=str(_id), name=name))
 
 
-def getLastUpdateDatetime(option: dict = None):
+def getLastUpdateDatetime(option: dict = None, beforeDays: int = None):
     try:
-        if len(sys.argv) == 2:
-            beforeDays = float(sys.argv[1])
+        if beforeDays is not None:
             print("[SearchFeed] recieved a time param. Will fetch posts started from `{beforeDays}` days ago!\n".format(
                 beforeDays=beforeDays))
             return datetime.datetime.now() - datetime.timedelta(days=beforeDays)
@@ -273,5 +272,9 @@ if __name__ == '__main__':
 
     with open(args.config, 'r') as stream:
         option = yaml.safe_load(stream)
+
+    print(args)
+
+    exit(0)
 
     main(option, args.beforeDays)
