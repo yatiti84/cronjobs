@@ -3,8 +3,8 @@ from elasticsearch import Elasticsearch, NotFoundError
 from gql import gql, Client
 from gql.transport.aiohttp import AIOHTTPTransport
 from mergedeep import merge, Strategy
-from optparse import OptionParser
 from util import auth
+import argparse
 import datetime
 import dateutil.parser
 import json
@@ -45,7 +45,7 @@ __default_config__ = {
 }
 
 
-def main(option: dict = None):
+def main(option: dict = None, beforeDays: int = None):
     ''' Search-feed program starts here '''
 
     # merge option to the default options
@@ -58,17 +58,16 @@ def main(option: dict = None):
 
     # create search-feed indices if not exist
 
-    createSearchFeedIndices()
+    createSearchFeedIndices(option)
 
-    initDt = getLastUpdateDatetime()
+    initDt = getLastUpdateDatetime(option, beforeDays)
     print("[SearchFeed] starts to update docs modified after `{dt}` to es at {current}:\n".format(
         dt=initDt, current=datetime.datetime.now()))
 
     client = getAuthenticatedClient(
         option["GRAPHQL"]["ENDPOINT"], option["GRAPHQL"]["USER"], option["GRAPHQL"]["SECRET"])
 
-    if len(sys.argv) == 2:
-        beforeDays = float(sys.argv[1])
+    if beforeDays is not None:
         total = 0
         for i in range(int(math.ceil(beforeDays/option["SEARCHFEED"]["UNIT_DAYS"]))):
             remainingDays = ((beforeDays - i * option["SEARCHFEED"]["UNIT_DAYS"]) % option["SEARCHFEED"]["UNIT_DAYS"],
@@ -79,12 +78,12 @@ def main(option: dict = None):
             endDt = startDt + datetime.timedelta(days=remainingDays)
 
             fetchedPosts = getPostsUpdatedBetween(client, startDt, endDt)
-            processSearchFeed(fetchedPosts)
+            processSearchFeed(fetchedPosts, option)
             total += len(fetchedPosts)
         printFinMessages(total)
     else:
         fetchedPosts = getPostsUpdatedBetween(client, initDt)
-        processSearchFeed(fetchedPosts)
+        processSearchFeed(fetchedPosts, option)
         printFinMessages(len(fetchedPosts))
 
 
@@ -95,13 +94,13 @@ def printFinMessages(fetchedPostsCount):
         count=fetchedPostsCount))
 
 
-def processSearchFeed(fetchedPosts):
+def processSearchFeed(fetchedPosts, option):
     for post in fetchedPosts:
-        cleanedPost = clean(post)
-        updateElasticsearch(cleanedPost)
+        cleanedPost = clean(post, option)
+        updateElasticsearch(cleanedPost, option)
     if len(fetchedPosts) > 0:
         saveLastUpdateDatetime(dateutil.parser.isoparse(
-            fetchedPosts[-1]["updatedAt"]))
+            fetchedPosts[-1]["updatedAt"]), option)
 
 
 def getPostsUpdatedBetween(client: Client, startDt, endDt=None):
@@ -183,7 +182,7 @@ def getPostsUpdatedBetween(client: Client, startDt, endDt=None):
     return client.execute(getScheduledItemsQuery)["allPosts"]
 
 
-def clean(post):
+def clean(post, option: dict = None):
     cleanedPost = {}
     _id = post["id"]
     state = post["state"]
@@ -197,7 +196,7 @@ def clean(post):
     return {"_id": _id, "state": state, "doc": cleanedPost}
 
 
-def updateElasticsearch(cleanedPost):
+def updateElasticsearch(cleanedPost, option: dict = None):
     _id = cleanedPost["_id"]
     state = cleanedPost["state"]
     doc = cleanedPost["doc"]
@@ -215,10 +214,9 @@ def updateElasticsearch(cleanedPost):
             id=str(_id), name=name))
 
 
-def getLastUpdateDatetime():
+def getLastUpdateDatetime(option: dict = None, beforeDays: int = None):
     try:
-        if len(sys.argv) == 2:
-            beforeDays = float(sys.argv[1])
+        if beforeDays is not None:
             print("[SearchFeed] recieved a time param. Will fetch posts started from `{beforeDays}` days ago!\n".format(
                 beforeDays=beforeDays))
             return datetime.datetime.now() - datetime.timedelta(days=beforeDays)
@@ -231,14 +229,14 @@ def getLastUpdateDatetime():
         return datetime.datetime.now() - datetime.timedelta(minutes=5)
 
 
-def saveLastUpdateDatetime(dt):
+def saveLastUpdateDatetime(dt, option: dict = None):
     milliseconds = int(time.mktime(dt.utctimetuple())
                        * 1000 + dt.microsecond / 1000.0)
     __es__.index(index=option["SEARCHFEED"]["META_INDEX"], doc_type="_doc",
                  id="meta", body={"ts": str(milliseconds)})
 
 
-def createSearchFeedIndices():
+def createSearchFeedIndices(option: dict = None):
     __es__.indices.create(index=option["SEARCHFEED"]["POSTS_INDEX"], ignore=400, body={
         "mappings": {
             "_doc": {
@@ -261,13 +259,16 @@ def pp(obj):
 
 if __name__ == '__main__':
 
-    parser = OptionParser()
-    parser.add_option("-c", "--config", dest="config",
-                      help="config file for searchFeed", metavar="FILE")
+    parser = argparse.ArgumentParser(
+        description='Process configuration of esFeed')
+    parser.add_argument("-c", "--config", dest="config",
+                        help="config file for searchFeed", metavar="FILE")
+    parser.add_argument("-b", "--before-days", dest="beforeDays",
+                        help="start search from specific days before", metavar="N", type=int)
 
-    (options, args) = parser.parse_args()
+    args = parser.parse_args()
 
-    with open(options.config, 'r') as stream:
+    with open(args.config, 'r') as stream:
         option = yaml.safe_load(stream)
 
-    main(option)
+    main(option, args.beforeDays)
