@@ -14,6 +14,7 @@ CONFIG_KEY = 'config'
 GRAPHQL_CMS_CONFIG_KEY = 'graphqlCMS'
 PLAYLIST_IDS_KEY = 'playlistIds'
 YOUTUBE_CREDENTIAL_KEY = 'youtubeCredential'
+MAX_NUMBER_KEY = 'maxNumber'
 
 __defaultConfig = {
     'ytrelayEndpoints': {
@@ -50,7 +51,7 @@ def convertTextToDraft(config: dict, s: str) -> tuple:
     return (j['draft'], j['html'], j['apiData'])
 
 
-def main(config: dict = None, configGraphQL: dict = None, playlistIds: list = None):
+def main(config: dict = None, configGraphQL: dict = None, playlistIds: list = None, maxNumber: int = 3):
     ''' Import YouTube Channel program starts here '''
     print(f'{__file__} is executing...')
 
@@ -113,7 +114,7 @@ def main(config: dict = None, configGraphQL: dict = None, playlistIds: list = No
     for playlistId in playlistIds:
         params = dict(
             part='snippet',
-            maxResults=3,
+            maxResults=maxNumber,
             playlistId=playlistId,
             fields='items(snippet/title,snippet/description,snippet/thumbnails/maxres/url,snippet/resourceId/videoId)'
         )
@@ -184,6 +185,8 @@ if __name__ == '__main__':
                         help='graphql config file for importYouTubeChannel', metavar='FILE', type=str, required=True)
     parser.add_argument('-p', '--playlist-ids', dest=PLAYLIST_IDS_KEY,
                         help='playlist ids, seperated by comma', metavar='PLIufxCyJpxOx4fCTTNcC7XCVZgY8MYQT5,PL1jBQxu5EklfCQ6rC-UzScji5zvNOBElG', type=str, required=True)
+    parser.add_argument('-m', '--max-number', dest=MAX_NUMBER_KEY,
+                        help='max number of videos per playlist', metavar='8', type=int, required=True)
 
     args = parser.parse_args()
 
@@ -192,5 +195,6 @@ if __name__ == '__main__':
     with open(getattr(args, GRAPHQL_CMS_CONFIG_KEY), 'r') as stream:
         configGraphQL = yaml.safe_load(stream)
     playlistIds = getattr(args, PLAYLIST_IDS_KEY).split(',')
+    maxNumber = getattr(args, MAX_NUMBER_KEY)
 
-    main(config, configGraphQL, playlistIds)
+    main(config, configGraphQL, playlistIds, maxNumber)
