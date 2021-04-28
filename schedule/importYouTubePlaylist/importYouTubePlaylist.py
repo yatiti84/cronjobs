@@ -158,12 +158,12 @@ if __name__ == '__main__':
     parser.add_argument('-p', '--playlist-ids', dest=PLAYLIST_IDS_KEY,
                         help='playlist ids, seperated by comma', metavar='PLIufxCyJpxOx4fCTTNcC7XCVZgY8MYQT5,PL1jBQxu5EklfCQ6rC-UzScji5zvNOBElG', type=str, required=True)
 
-    (options, args) = parser.parse_args()
+    args = parser.parse_args()
 
-    with open(getattr(options, CONFIG_KEY), 'r') as stream:
+    with open(getattr(args, CONFIG_KEY), 'r') as stream:
         config = yaml.safe_load(stream)
-    with open(getattr(options, GRAPHQL_CMS_CONFIG_KEY), 'r') as stream:
+    with open(getattr(args, GRAPHQL_CMS_CONFIG_KEY), 'r') as stream:
         configGraphQL = yaml.safe_load(stream)
-    playlistIds = getattr(options, PLAYLIST_IDS_KEY).split(',')
+    playlistIds = getattr(args, PLAYLIST_IDS_KEY).split(',')
 
     main(config, configGraphQL, playlistIds)
