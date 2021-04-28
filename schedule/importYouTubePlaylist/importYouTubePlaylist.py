@@ -49,28 +49,6 @@ def convertTextToDraft(config: dict, s: str) -> tuple:
     return (j['draft'], j['html'], j['apiData'])
 
 
-# TODO excape the text
-__mutationCreateVideoPostExample = '''
-mutation {
-  createPost(data:{
-    slug: "4QePrv24TBU",
-    state: draft,
-    name:"ずっと真夜中でいいのに。『勘冴えて悔しいわ』MV (ZUTOMAYO - Kansaete Kuyashiiwa)",
-    style: videoNews,
-    brief: "チャンネル100万登録記念で制作したスピンオフ的MV\n『勘冴えて悔しいわ』\n(ZUTOMAYO - Kansaete Kuyashiiwa)\nLyrics & Vocal - ACAね\nMusic - ACAね, ラムシーニ\nArrangement - ラムシーニ, 100回嘔吐, ZTMY\nPiano - Jun☆Murayama\nDrums - Yoshihiro Kawamura\nBass - Ryosuke Nikamoto\nGuitar - Takayuki \"Kojiro\" Sasaki\nRec & Mix Engineer - Toru Matake\nMastering Engineer - Takeo Kira \nSound Direction - Kohei Matsumoto\n\nMV - sakiyama\n\n【ずっと真夜中でいいのに。 'ZUTOMAYO' 'ZTMY'】\n\"ACAね\"Twitter：https://twitter.com/zutomayo​\nOfficial Twitter : https://twitter.com/zutomayo_staff"
-    source: "yt",
-    heroVideo: {
-      create:{state: draft, youtubeUrl: "https://www.youtube.com/watch?v=4QePrv24TBU",
-          name: "ずっと真夜中でいいのに。『勘冴えて悔しいわ』MV (ZUTOMAYO - Kansaete Kuyashiiwa)", thumbnail: "https://i.ytimg.com/vi_webp/4QePrv24TBU/maxresdefault.webp?v=606187f8"}
-    }
-  }){
-    id
-    }
-  }
-}
-'''
-
-
 def main(config: dict = None, configGraphQL: dict = None, playlistIds: list = None):
     ''' Import YouTube Channel program starts here '''
     print(f'{__file__} is executing...')
@@ -143,25 +121,55 @@ def main(config: dict = None, configGraphQL: dict = None, playlistIds: list = No
 
         # check videos' existence in CMS
         # print(data)
-        itemsID = [item['snippet']['resourceId']['videoId']
-                   for item in data['items']]
+
+        items = [{'id': item['snippet']['resourceId']['videoId'], 'item': item}
+                 for item in data['items']]
 
         # format query array
         queryConditions = ','.join(
-            ['{url_ends_with: ' + '"' + id + '"}' for id in itemsID])
+            ['{url_ends_with: ' + '"' + item['id'] + '"}' for item in items])
         query = gql(__queryExistingVideosTemplate % queryConditions)
         existingVideos = gqlAuthenticatedClient.execute(query)['allVideos']
-        videos = [{
-            'id': id,
-            'isInCMS': id in existingVideos,
-        } for id in itemsID]
-        # print(videos)
-        # save new video to CMS
-        for video in videos:
-            if video['isInCMS']:
-                print(f'Video({video["id"]}) is in CMS. Skip it.')
+        for item in items:
+            if item['id'] in existingVideos:
+                print(f'Video({item["id"]}) is in CMS. Skip it.')
                 continue
-            print('create videos and posts in cms')
+            # print(item)
+            # save new video to CMS
+            snippet = item['item']['snippet']
+            brief = convertTextToDraft(config, snippet['description'])
+            insertMutation = gql(f'''
+mutation {{
+    createPost(data: {{
+        slug: {json.dumps(snippet['resourceId']['videoId'], ensure_ascii=False)},
+        state: draft,
+        name: {json.dumps(snippet['title'], ensure_ascii=False)},
+        style: videoNews,
+        brief: {json.dumps(brief[0], ensure_ascii=False)},
+        briefHtml: {json.dumps(brief[1], ensure_ascii=False)},
+        briefApiData: {json.dumps(brief[2], ensure_ascii=False)},
+        source: "yt",
+        heroVideo: {{
+            create: {{
+                state: draft,
+                youtubeUrl: {json.dumps('https://www.youtube.com/watch?v=' + snippet['resourceId']['videoId'], ensure_ascii=False)},
+                name: {json.dumps(snippet['title'], ensure_ascii=False)},
+                thumbnail: {json.dumps(snippet['thumbnails']['default']['url'], ensure_ascii=False)}
+            }}
+        }}
+    }}){{
+        id
+        slug
+    }}
+}}
+''')
+
+        result = gqlAuthenticatedClient.execute(insertMutation)
+        if 'errors' not in result:
+            print(
+                f'post(id:{result["createPost"]["id"]}) is created for {snippet["title"]}')
+        else:
+            print(f'[Error] {result["errors"]}')
 
 
 if __name__ == '__main__':
