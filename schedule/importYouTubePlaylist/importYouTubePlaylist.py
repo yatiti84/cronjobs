@@ -120,12 +120,7 @@ def main(config: dict = None, configGraphQL: dict = None, playlistIds: list = No
         )
         resp = requests.get(url=ytrelayPlaylistItemsAPI, params=params)
 
-        if resp.status_code < 200 and resp.status_code >= 300:
-            print(
-                f'ytrelayPlaylistItemsAPI has error({resp.status_code}):' + resp.text)
-            sys.exit(1)
-        # FIXME yt-relay doesn't implement status code properly
-        if 'error' in resp.json():
+        if resp.status_code < 200 or resp.status_code >= 300:
             print(
                 f'ytrelayPlaylistItemsAPI has error({resp.status_code}):' + resp.text)
             sys.exit(1)
