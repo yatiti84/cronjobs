@@ -119,6 +119,17 @@ def main(config: dict = None, configGraphQL: dict = None, playlistIds: list = No
             fields='items(snippet/title,snippet/description,snippet/thumbnails/maxres/url,snippet/resourceId/videoId)'
         )
         resp = requests.get(url=ytrelayPlaylistItemsAPI, params=params)
+
+        if resp.status_code < 200 and resp.status_code >= 300:
+            print(
+                f'ytrelayPlaylistItemsAPI has error({resp.status_code}):' + resp.text)
+            sys.exit(1)
+        # FIXME yt-relay doesn't implement status code properly
+        if 'error' in resp.json():
+            print(
+                f'ytrelayPlaylistItemsAPI has error({resp.status_code}):' + resp.text)
+            sys.exit(1)
+
         data = resp.json()
 
         # check videos' existence in CMS
