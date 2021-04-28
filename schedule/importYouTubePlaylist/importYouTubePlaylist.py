@@ -2,9 +2,11 @@ from gql import gql, Client
 from gql.transport.requests import RequestsHTTPTransport
 from mergedeep import merge, Strategy
 import argparse
+import json
 import os
 import requests
 import sys
+import urllib.request
 import yaml
 
 CONFIG_KEY = 'config'
@@ -16,6 +18,7 @@ __defaultConfig = {
     'ytrelayEndpoints': {
         'playlistItems': 'http://yt-relay.default.svc.cluster.local/youtube/v3/playlistItems',
     },
+    'converTextToDraftApiEndpoint': 'https://api.mirrormedia.mg/converttext',
 }
 
 __defaultgraphqlCmsConfig = {
@@ -31,6 +34,20 @@ query {
   }
 }
 '''
+
+
+def convertTextToDraft(config: dict, s: str) -> tuple:
+    '''convertTextToDraft converts a string to a tuple of strings (draft, html, apiData)
+    '''
+    data = s.encode('utf-8')
+    req = urllib.request.Request(config['converTextToDraftApiEndpoint'])
+    req.add_header('Content-Type', 'text/plain')
+    req.add_header('Accept', 'Application/json')
+    with urllib.request.urlopen(req, data) as f:
+        j = json.loads(f.read().decode('utf-8'))
+
+    return (j['draft'], j['html'], j['apiData'])
+
 
 # TODO excape the text
 __mutationCreateVideoPostExample = '''
