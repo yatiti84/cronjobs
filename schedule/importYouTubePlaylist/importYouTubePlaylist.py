@@ -1,6 +1,7 @@
 from gql import gql, Client
 from gql.transport.requests import RequestsHTTPTransport
 from mergedeep import merge, Strategy
+from urllib.parse import urlparse
 import argparse
 import json
 import os
@@ -114,14 +115,12 @@ def main(config: dict = None, configGraphQL: dict = None, playlistIds: list = No
             part='snippet',
             maxResults=3,
             playlistId=playlistId,
-            fields='items(id, snippet/title,snippet/description,snippet/thumbnails/maxres/url,snippet/resourceId/videoId)'
+            fields='items(snippet/title,snippet/description,snippet/thumbnails/maxres/url,snippet/resourceId/videoId)'
         )
         resp = requests.get(url=ytrelayPlaylistItemsAPI, params=params)
         data = resp.json()
 
         # check videos' existence in CMS
-        # print(data)
-
         items = [{'id': item['snippet']['resourceId']['videoId'], 'item': item}
                  for item in data['items']]
 
@@ -129,7 +128,10 @@ def main(config: dict = None, configGraphQL: dict = None, playlistIds: list = No
         queryConditions = ','.join(
             ['{url_ends_with: ' + '"' + item['id'] + '"}' for item in items])
         query = gql(__queryExistingVideosTemplate % queryConditions)
-        existingVideos = gqlAuthenticatedClient.execute(query)['allVideos']
+
+        existingVideos = [urllib.parse.parse_qs(urlparse(video['url'])[4])['v'][0] for video in gqlAuthenticatedClient.execute(query)[
+            'allVideos']]
+
         for item in items:
             if item['id'] in existingVideos:
                 print(f'Video({item["id"]}) is in CMS. Skip it.')
