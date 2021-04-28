@@ -164,12 +164,12 @@ mutation {{
 }}
 ''')
 
-        result = gqlAuthenticatedClient.execute(insertMutation)
-        if 'errors' not in result:
-            print(
-                f'post(id:{result["createPost"]["id"]}) is created for {snippet["title"]}')
-        else:
-            print(f'[Error] {result["errors"]}')
+            result = gqlAuthenticatedClient.execute(insertMutation)
+            if 'errors' not in result:
+                print(
+                    f'post(id:{result["createPost"]["id"]}) is created for {snippet["title"]}')
+            else:
+                print(f'[Error] {result["errors"]}')
 
 
 if __name__ == '__main__':
