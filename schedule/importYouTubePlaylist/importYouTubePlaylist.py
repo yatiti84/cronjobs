@@ -147,7 +147,8 @@ def main(config: dict = None, configGraphQL: dict = None, playlistIds: list = No
             # save new video to CMS
             snippet = item['item']['snippet']
             brief = convertTextToDraft(config, snippet['description'])
-            insertMutation = gql(f'''
+            print(f'convert [{snippet["title"]}] brief to:\n{brief}')
+            insertMutationStr = '''
 mutation {{
     createPost(data: {{
         slug: {json.dumps(snippet['resourceId']['videoId'], ensure_ascii=False)},
@@ -171,8 +172,10 @@ mutation {{
         slug
     }}
 }}
-''')
-
+'''
+            print(
+                f'insert mutation for post[{snippet["title"]}]:\n{insertMutationStr}')
+            insertMutation = gql(insertMutationStr)
             result = gqlAuthenticatedClient.execute(insertMutation)
             if 'errors' not in result:
                 print(
