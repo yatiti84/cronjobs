@@ -9,7 +9,6 @@ import requests
 import sys
 import urllib.request
 import yaml
-import hashlib
 
 CONFIG_KEY = 'config'
 GRAPHQL_CMS_CONFIG_KEY = 'graphqlCMS'
@@ -43,7 +42,6 @@ def convertTextToDraft(config: dict, s: str) -> tuple:
     '''convertTextToDraft converts a string to a tuple of strings (draft, html, apiData)
     '''
     data = s.encode('utf-8')
-    print(f'data sha256:{hashlib.sha256(data).hexdigest()}')
     req = urllib.request.Request(config['converTextToDraftApiEndpoint'])
     req.add_header('Content-Type', 'text/plain')
     req.add_header('Accept', 'Application/json')
