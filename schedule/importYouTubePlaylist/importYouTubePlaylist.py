@@ -148,7 +148,7 @@ def main(config: dict = None, configGraphQL: dict = None, playlistIds: list = No
             snippet = item['item']['snippet']
             brief = convertTextToDraft(config, snippet['description'])
             print(f'convert [{snippet["title"]}] brief to:\n{brief}')
-            insertMutationStr = '''
+            insertMutationStr = f'''
 mutation {{
     createPost(data: {{
         slug: {json.dumps(snippet['resourceId']['videoId'], ensure_ascii=False)},
