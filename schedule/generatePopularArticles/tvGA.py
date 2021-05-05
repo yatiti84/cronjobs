@@ -1,12 +1,8 @@
-import requests
 from apiclient.discovery import build
-from oauth2client.service_account import ServiceAccountCredentials
-# import psycopg2
 import json
-import os
+
 from google.cloud import storage
 from datetime import date, timedelta, datetime
-from oauth2client import client, file, tools
 
 import gql
 
@@ -18,11 +14,8 @@ def initialize_analyticsreporting():
         analytics an authorized analyticsreporting service object.
     """
 
-    credentials = ServiceAccountCredentials.from_json_keyfile_name(
-        KEY_FILE_LOCATION, SCOPES)
-
     # Build the service object.
-    analytics = build('analyticsreporting', 'v4', credentials=credentials)
+    analytics = build('analyticsreporting', 'v4')
 
     return analytics
 
@@ -95,8 +88,12 @@ def jsonify_response(response):
         f.write(json.dumps(result))
 
 
-if __name__ == '__main__':
+def main():
     analytics = initialize_analyticsreporting()
     response = get_report(analytics)
     jsonify_response(response)
     upload_blob()
+
+
+if __name__ == '__main__':
+    main()
