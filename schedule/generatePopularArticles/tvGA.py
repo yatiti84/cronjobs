@@ -69,7 +69,7 @@ def upload_blob(bucket_name: str = "static-mnews-tw-dev", destination_blob_name:
     print(f"Report is uploaded to json/{destination_blob_name}.")
 
 
-def jsonify_response(response: dict) -> str:
+def convert_response_to_report(response: dict) -> str:
     """Parse the response and generate the json format file for it"""
     result = {}
     data = response['reports'][0]['data']['rows']
@@ -88,7 +88,7 @@ def jsonify_response(response: dict) -> str:
 def main():
     analytics = initialize_analyticsreporting()
     response = get_report(analytics)
-    report = jsonify_response(response)
+    report = convert_response_to_report(response)
     upload_blob(report=report)
 
 
