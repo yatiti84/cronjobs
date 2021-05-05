@@ -7,11 +7,11 @@ import json
 
 
 def initialize_analyticsreporting() -> googleapiclient.discovery.Resource:
-    """Initializes an analyticsreporting service object.
+    '''Initializes an analyticsreporting service object.
 
     Returns:
         analytics an authorized analyticsreporting service object.
-    """
+    '''
 
     # Build the service object.
     analytics = build('analyticsreporting', 'v4')
@@ -31,13 +31,13 @@ def get_report(analytics: googleapiclient.discovery.Resource) -> dict:
                         {'expression': 'ga:pageviews'}
                     ],
                     'orderBys': [{'fieldName': 'ga:pageviews', 'sortOrder': 'DESCENDING'}],
-                    'dimensions': [{'name': "ga:pagePathLevel1"}, {'name': 'ga:pagePathLevel2'}],
+                    'dimensions': [{'name': 'ga:pagePathLevel1'}, {'name': 'ga:pagePathLevel2'}],
                     'dimensionFilterClauses': [
                         {
                             'filters': [
                                 {
                                     'dimensionName': 'ga:pagePath',
-                                    'operator': "REGEXP",
+                                    'operator': 'REGEXP',
                                     'expressions': [
                                         '^\/story\/|^\/projects\/'
                                     ]
@@ -51,13 +51,13 @@ def get_report(analytics: googleapiclient.discovery.Resource) -> dict:
     ).execute()
 
 
-def upload_blob(bucket_name: str = "static-mnews-tw-dev", destination_blob_name: str = FILE_NAME, report: str = ""):
-    """Uploads a string to the bucket."""
-    # destination_blob_name = "storage-object-name"
+def upload_blob(bucket_name: str = 'static-mnews-tw-dev', destination_blob_name: str = FILE_NAME, report: str = ''):
+    '''Uploads a string to the bucket.'''
+    # destination_blob_name = 'storage-object-name'
 
     storage_client = storage.Client()
     bucket = storage_client.bucket(bucket_name)
-    blob = bucket.blob(f"json/{destination_blob_name}")
+    blob = bucket.blob(f'json/{destination_blob_name}')
 
     blob.content_encoding = 'gzip'
     blob.upload_from_string(
@@ -66,11 +66,11 @@ def upload_blob(bucket_name: str = "static-mnews-tw-dev", destination_blob_name:
     blob.cache_control = 'max-age=300,public'
     blob.patch()
 
-    print(f"Report is uploaded to json/{destination_blob_name}.")
+    print(f'Report is uploaded to json/{destination_blob_name}.')
 
 
 def convert_response_to_report(response: dict) -> str:
-    """Parse the response and generate the json format file for it"""
+    '''Parse the response and generate the json format file for it'''
     result = {}
     data = response['reports'][0]['data']['rows']
     data = sorted(
