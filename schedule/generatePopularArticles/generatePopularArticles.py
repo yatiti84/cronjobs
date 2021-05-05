@@ -1,4 +1,4 @@
-from apiclient.discovery import build
+from apiclient import discovery
 from datetime import date, timedelta, datetime
 from google.cloud import storage
 from mergedeep import merge, Strategy
@@ -9,7 +9,7 @@ import json
 import yaml
 
 
-def initialize_analyticsreporting() -> googleapiclient.discovery.Resource:
+def initialize_analyticsreporting() -> discovery.Resource:
     '''Initializes an analyticsreporting service object.
 
     Returns:
@@ -17,12 +17,12 @@ def initialize_analyticsreporting() -> googleapiclient.discovery.Resource:
     '''
 
     # Build the service object.
-    analytics = build('analyticsreporting', 'v4')
+    analytics = discovery.build('analyticsreporting', 'v4')
 
     return analytics
 
 
-def get_report(analytics: googleapiclient.discovery.Resource, analyticsID: str, pageSize: int, daydelta: int) -> dict:
+def get_report(analytics: discovery.Resource, analyticsID: str, pageSize: int, daydelta: int) -> dict:
     # Use the Analytics Service Object to query the Analytics Reporting API V4.
     return analytics.reports().batchGet(
         body={
