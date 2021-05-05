@@ -1,15 +1,13 @@
 import requests
-from tvGA import API_URL
-from typing import List
 
 
-def CDN(url):
-    url = url.replace('https://storage.googleapis.com/mirrormedia-files', 'https://www.mirrormedia.mg')
-    url = url.replace('https://storage.googleapis.com/static-mnews-tw-dev', 'https://dev.mnews.tw')
-    url = url.replace('https://storage.googleapis.com/mirror-tv-file', 'https://www.mnews.tw')
+def CDN(fileHostDomainRule: dict, url: str):
+    for key in fileHostDomainRule.keys():
+        url = url.replace(key, fileHostDomainRule[key], 1)
     return url
 
-def gql_query_from_slugs(slugs: List) -> List:
+
+def gql_query_from_slugs(configGraphQL: dict, fileHostDomainRule: dict, slugs: list) -> list:
     slug_cond = ','.join([f'{{slug: "{slug}" }}' for slug in slugs])
 
     gql_query = f"""
@@ -26,14 +24,14 @@ def gql_query_from_slugs(slugs: List) -> List:
     """
     # Learn this from playground
 
-    r = requests.post(API_URL, json={"query": gql_query})
+    r = requests.post(configGraphQL['apiEndpoint'], json={"query": gql_query})
 
     data = r.json()['data']['allPosts']
     for item in data:
         if item['heroImage']:
-            item['heroImage']['urlMobileSized'] = CDN(item['heroImage']['urlMobileSized'])
-            item['heroImage']['urlTinySized'] = CDN(item['heroImage']['urlTinySized'])
+            item['heroImage']['urlMobileSized'] = CDN(fileHostDomainRule,
+                                                      item['heroImage']['urlMobileSized'])
+            item['heroImage']['urlTinySized'] = CDN(fileHostDomainRule,
+                                                    item['heroImage']['urlTinySized'])
 
     return data
-
-
