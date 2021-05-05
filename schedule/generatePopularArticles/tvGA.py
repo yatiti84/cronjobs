@@ -66,7 +66,8 @@ def upload_blob(bucket_name: str = 'static-mnews-tw-dev', destination_blob_name:
     blob.cache_control = 'max-age=300,public'
     blob.patch()
 
-    print(f'Report is uploaded to json/{destination_blob_name}.')
+    print(
+        f'Report is uploaded to bucket://{bucket_name}/json/{destination_blob_name}')
 
 
 def convert_response_to_report(response: dict) -> str:
