@@ -54,7 +54,7 @@ def get_report(analytics: discovery.Resource, analytics_id: str, page_size: int,
     ).execute()
 
 
-def upload_blob(bucket_name: str, destination_blob_name: str, report: str):
+def upload_blob(bucket_name: str, destination_blob_name: str, report: bytes):
     '''Uploads a string to the bucket.'''
     # destination_blob_name = 'storage-object-name'
 
@@ -132,7 +132,7 @@ def main(config: dict, config_graphql: dict, days: int):
         analytics, config['analyticsID'], config['report']['pageSize'], date_range)
     report = convert_response_to_report(config_graphql, date_range, response)
     upload_blob(
-        bucket_name=config['report']['bucketName'], destination_blob_name=config['report']['fileName'], report=report)
+        bucket_name=config['report']['bucketName'], destination_blob_name=config['report']['fileName'], report=report.encode('utf-8'))
 
 
 CONFIG_KEY = 'config'
