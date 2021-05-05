@@ -22,14 +22,14 @@ def initialize_analyticsreporting() -> discovery.Resource:
     return analytics
 
 
-def get_report(analytics: discovery.Resource, analyticsID: str, pageSize: int, daydelta: int) -> dict:
+def get_report(analytics: discovery.Resource, analyticsID: str, pageSize: int, date_range: tuple) -> dict:
     # Use the Analytics Service Object to query the Analytics Reporting API V4.
     return analytics.reports().batchGet(
         body={
             'reportRequests': [
                 {
                     'viewId': analyticsID,
-                    'dateRanges': [{'startDate': str(date.today() - timedelta(days=daydelta)), 'endDate': str(date.today())}],
+                    'dateRanges': [{'startDate': date_range[0], 'endDate': date_range[-1]}],
                     'metrics': [
                         {'expression': 'ga:pageviews'}
                     ],
@@ -73,7 +73,7 @@ def upload_blob(bucket_name: str, destination_blob_name: str, report: str):
         f'Report is uploaded to bucket://{bucket_name}/json/{destination_blob_name}')
 
 
-def convert_response_to_report(configGraphQL: dict, response: dict) -> str:
+def convert_response_to_report(configGraphQL: dict, date_range: tuple, response: dict) -> str:
     '''Parse the response and generate the json format file for it'''
     result = {}
     data = response['reports'][0]['data']['rows']
@@ -83,8 +83,8 @@ def convert_response_to_report(configGraphQL: dict, response: dict) -> str:
 
     result['report'] = gql.gql_query_from_slugs(
         configGraphQL, config['report']['fileHostDomainRule'], slugs)
-    result['start_date'] = str(START_DATE)
-    result['end_date'] = str(END_DATE)
+    result['start_date'] = str(date_range[0])
+    result['end_date'] = str(date_range[-1])
     result['generate_time'] = str(datetime.now())
 
     return json.dumps(result, ensure_ascii=False)
@@ -124,10 +124,13 @@ def main(config: dict, configGraphQL: dict, days: int):
     if days <= 0:
         days = 2
 
+    today = date.today()
+    date_range = (str(today - timedelta(days=days)), str(today))
+
     analytics = initialize_analyticsreporting()
     response = get_report(
-        analytics, config['analyticsID'], config['report']['pageSize'], days)
-    report = convert_response_to_report(configGraphQL, response)
+        analytics, config['analyticsID'], config['report']['pageSize'], date_range)
+    report = convert_response_to_report(configGraphQL, date_range, response)
     upload_blob(bucket_name=config['report']['bucketName'], report=report)
 
 
