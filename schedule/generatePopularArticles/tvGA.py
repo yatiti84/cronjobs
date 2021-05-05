@@ -7,7 +7,7 @@ from datetime import date, timedelta, datetime
 import gql
 
 
-def initialize_analyticsreporting():
+def initialize_analyticsreporting() -> googleapiclient.discovery.Resource:
     """Initializes an analyticsreporting service object.
 
     Returns:
@@ -20,7 +20,7 @@ def initialize_analyticsreporting():
     return analytics
 
 
-def get_report(analytics):
+def get_report(analytics: googleapiclient.discovery.Resource) -> dict:
     # Use the Analytics Service Object to query the Analytics Reporting API V4.
     return analytics.reports().batchGet(
         body={
@@ -52,11 +52,7 @@ def get_report(analytics):
     ).execute()
 
 
-def path_join(lst):
-    return '/'.join([path.replace('/', '') for path in lst])
-
-
-def upload_blob(bucket_name="static-mnews-tw-dev", source_file_name=FILE_NAME, destination_blob_name=FILE_NAME):
+def upload_blob(bucket_name: str = "static-mnews-tw-dev", source_file_name: str = FILE_NAME, destination_blob_name: str = FILE_NAME):
     """Uploads a file to the bucket."""
     # source_file_name = "local/path/to/file"
     # destination_blob_name = "storage-object-name"
@@ -71,21 +67,20 @@ def upload_blob(bucket_name="static-mnews-tw-dev", source_file_name=FILE_NAME, d
     print(f"File {source_file_name} uploaded to json/{destination_blob_name}.")
 
 
-def jsonify_response(response):
+def jsonify_response(response: dict) -> str:
     """Parse the response and generate the json format file for it"""
     result = {}
-    with open('popularlist.json', 'w') as f:
-        data = response['reports'][0]['data']['rows']
-        data = sorted(
-            data, key=lambda x: x['metrics'][0]['values'][0], reverse=True)
-        slugs = [item['dimensions'][1].replace('/', '') for item in data]
+    data = response['reports'][0]['data']['rows']
+    data = sorted(
+        data, key=lambda x: x['metrics'][0]['values'][0], reverse=True)
+    slugs = [item['dimensions'][1].replace('/', '') for item in data]
 
-        result['report'] = gql.gql_query_from_slugs(slugs)
-        result['start_date'] = str(START_DATE)
-        result['end_date'] = str(END_DATE)
-        result['generate_time'] = str(datetime.now())
+    result['report'] = gql.gql_query_from_slugs(slugs)
+    result['start_date'] = str(START_DATE)
+    result['end_date'] = str(END_DATE)
+    result['generate_time'] = str(datetime.now())
 
-        f.write(json.dumps(result))
+    return json.dumps(result, ensure_ascii=False)
 
 
 def main():
