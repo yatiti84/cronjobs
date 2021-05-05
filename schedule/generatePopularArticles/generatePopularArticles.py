@@ -131,7 +131,8 @@ def main(config: dict, config_graphql: dict, days: int):
     response = get_report(
         analytics, config['analyticsID'], config['report']['pageSize'], date_range)
     report = convert_response_to_report(config_graphql, date_range, response)
-    upload_blob(bucket_name=config['report']['bucketName'], report=report)
+    upload_blob(
+        bucket_name=config['report']['bucketName'], destination_blob_name=config['report']['fileName'], report=report)
 
 
 CONFIG_KEY = 'config'
