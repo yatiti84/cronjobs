@@ -22,7 +22,7 @@ def initialize_analyticsreporting() -> googleapiclient.discovery.Resource:
     return analytics
 
 
-def get_report(analytics: googleapiclient.discovery.Resource, analyticsID: str, daydelta: int) -> dict:
+def get_report(analytics: googleapiclient.discovery.Resource, analyticsID: str, pageSize: int, daydelta: int) -> dict:
     # Use the Analytics Service Object to query the Analytics Reporting API V4.
     return analytics.reports().batchGet(
         body={
@@ -48,7 +48,7 @@ def get_report(analytics: googleapiclient.discovery.Resource, analyticsID: str, 
                             ]
                         }
                     ],
-                    'pageSize': 60
+                    'pageSize': pageSize,
                 }]
         }
     ).execute()
@@ -96,6 +96,7 @@ __defaultConfig = {
         'bucketName': '',
         'fileName': 'popularlist.json',
         'filter': ['^\/story\/|^\/projects\/'],
+        'pageSize': 20,
     },
     'fileHostDomainRule': {
         "https://storage.googleapis.com/mirrormedia-files": "https://www.mirrormedia.mg",
@@ -124,7 +125,8 @@ def main(config: dict, configGraphQL: dict, days: int):
         days = 2
 
     analytics = initialize_analyticsreporting()
-    response = get_report(analytics, config['analyticsID'], days)
+    response = get_report(
+        analytics, config['analyticsID'], config['report']['pageSize'], days)
     report = convert_response_to_report(configGraphQL, response)
     upload_blob(bucket_name=config['report']['bucketName'], report=report)
 
