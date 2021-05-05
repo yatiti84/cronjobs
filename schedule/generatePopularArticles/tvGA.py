@@ -1,11 +1,9 @@
 from apiclient.discovery import build
-import json
-
-from google.cloud import storage
 from datetime import date, timedelta, datetime
-
+from google.cloud import storage
 import gql
 import gzip
+import json
 
 
 def initialize_analyticsreporting() -> googleapiclient.discovery.Resource:
