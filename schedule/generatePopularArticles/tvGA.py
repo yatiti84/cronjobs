@@ -5,6 +5,7 @@ from google.cloud import storage
 from datetime import date, timedelta, datetime
 
 import gql
+import gzip
 
 
 def initialize_analyticsreporting() -> googleapiclient.discovery.Resource:
@@ -52,19 +53,22 @@ def get_report(analytics: googleapiclient.discovery.Resource) -> dict:
     ).execute()
 
 
-def upload_blob(bucket_name: str = "static-mnews-tw-dev", source_file_name: str = FILE_NAME, destination_blob_name: str = FILE_NAME):
-    """Uploads a file to the bucket."""
-    # source_file_name = "local/path/to/file"
+def upload_blob(bucket_name: str = "static-mnews-tw-dev", destination_blob_name: str = FILE_NAME, report: str = ""):
+    """Uploads a string to the bucket."""
     # destination_blob_name = "storage-object-name"
 
     storage_client = storage.Client()
     bucket = storage_client.bucket(bucket_name)
     blob = bucket.blob(f"json/{destination_blob_name}")
-    # blob.upload_from_file()
 
-    blob.upload_from_filename(source_file_name)
+    blob.content_encoding = 'gzip'
+    blob.upload_from_string(
+        data=gzip.compress(data=report, compresslevel=9), content_type='application/json', client=storage_client)
+    blob.content_language = 'zh'
+    blob.cache_control = 'max-age=300,public'
+    blob.patch()
 
-    print(f"File {source_file_name} uploaded to json/{destination_blob_name}.")
+    print(f"Report is uploaded to json/{destination_blob_name}.")
 
 
 def jsonify_response(response: dict) -> str:
@@ -86,8 +90,8 @@ def jsonify_response(response: dict) -> str:
 def main():
     analytics = initialize_analyticsreporting()
     response = get_report(analytics)
-    jsonify_response(response)
-    upload_blob()
+    report = jsonify_response(response)
+    upload_blob(report=report)
 
 
 if __name__ == '__main__':
