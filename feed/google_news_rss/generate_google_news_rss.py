@@ -151,7 +151,7 @@ for id, category in __categories__.items():
         bucket_name=__bucket_name__,
         data=fg.rss_str(pretty=False, extensions=True,
                         encoding='UTF-8', xml_declaration=True),
-        content_type='application/rss+xml',
+        content_type='application/rss+xml; charset=utf-8',
         destination_blob_name=__rss_base__ +
         '/google_news_' + category['slug'] + '.xml'
     )
