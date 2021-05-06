@@ -180,7 +180,7 @@ if __name__ == '__main__':
     upload_data(
         bucket_name=bucket_name,
         data=data.encode(),
-        content_type='application/xml',
+        content_type='application/xml; charset=utf-8',
         destination_blob_name=rss_base +
         '/line_today.xml'
     )
