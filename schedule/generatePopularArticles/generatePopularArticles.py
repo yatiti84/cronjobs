@@ -64,7 +64,7 @@ def upload_blob(bucket_name: str, destination_blob_name: str, report: bytes):
 
     blob.content_encoding = 'gzip'
     blob.upload_from_string(
-        data=gzip.compress(data=report, compresslevel=9), content_type='application/json', client=storage_client)
+        data=gzip.compress(data=report, compresslevel=9), content_type='application/json; charset=utf-8', client=storage_client)
     blob.content_language = 'zh'
     blob.cache_control = 'max-age=300,public'
     blob.patch()
