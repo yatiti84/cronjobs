@@ -22,16 +22,14 @@ def initialize_analyticsreporting() -> discovery.Resource:
     return analytics
 
 
-def get_report(analytics: discovery.Resource, analytics_id: str, page_path_level1_regex_filter: str, additional_dimension_filters: list, page_size: int, date_range: tuple) -> dict:
+def get_report(analytics: discovery.Resource, analytics_id: str, page_path_level1_regex_filter: list, additional_dimension_filters: list, page_size: int, date_range: tuple) -> dict:
     # Use the Analytics Service Object to query the Analytics Reporting API V4.
     dimensions = [{'name': 'ga:pagePathLevel2'}]
     dimension_filters = [
         {
             'dimensionName': 'ga:pagePathLevel1',
             'operator': 'REGEX',
-            'expressions': [
-                page_path_level1_regex_filter,
-            ]
+            'expressions': page_path_level1_regex_filter,
         }
     ]
     if additional_dimension_filters is not None:
@@ -144,7 +142,7 @@ def main(config: dict, config_graphql: dict, days: int):
 
     analytics = initialize_analyticsreporting()
     response = get_report(
-        analytics, config['analyticsID'], config['pagePathLevel1RegexFilter'], config['additionalDimensionFilters'], config['report']['pageSize'], time_range)
+        analytics, config['analyticsID'], config['report']['pagePathLevel1RegexFilter'], config['report']['additionalDimensionFilters'], config['report']['pageSize'], time_range)
     report = convert_response_to_report(config_graphql, date_range, response)
     upload_blob(
         bucket_name=config['report']['bucketName'], destination_blob_name=config['report']['fileName'], report=report.encode('utf-8'))
