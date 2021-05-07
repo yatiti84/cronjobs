@@ -1,5 +1,5 @@
 from apiclient import discovery
-from datetime import timedelta, datetime
+from datetime import timedelta, date, datetime
 from google.cloud import storage
 from mergedeep import merge, Strategy
 import argparse
@@ -44,7 +44,7 @@ def get_report(analytics: discovery.Resource, analytics_id: str, page_path_level
                                                                                 'operator') != None else 'REGEX',
                 'expressions': additional_dimension_filter['expressions'],
             })
-
+    print(f'requesting report in {date_range}')
     return analytics.reports().batchGet(
         body={
             'reportRequests': [
@@ -136,14 +136,14 @@ def main(config: dict, config_graphql: dict, days: int):
     config_graphql = merge({}, __default_graphql_cms_config, config_graphql,
                            strategy=Strategy.TYPESAFE_REPLACE)
     if days <= 0:
-        days = 2
+        days = 1
 
-    now = datetime.now()
-    time_range = (str(now - timedelta(days=days)), str(now))
+    today = date.today()
+    date_range = (str(today - timedelta(days=days)), str(today))
 
     analytics = initialize_analyticsreporting()
     response = get_report(
-        analytics, config['analyticsID'], config['report']['pagePathLevel1RegexFilter'], config['report']['additionalDimensionFilters'], config['report']['pageSize'], time_range)
+        analytics, config['analyticsID'], config['report']['pagePathLevel1RegexFilter'], config['report']['additionalDimensionFilters'], config['report']['pageSize'], date_range)
     report = convert_response_to_report(config_graphql, date_range, response)
     print(f'report generated: {report}')
     upload_blob(
