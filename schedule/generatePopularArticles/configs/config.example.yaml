@@ -1,0 +1,20 @@
+{
+  "analyticsID": "",
+  "report":
+    {
+      "additionalDimensionFilters":
+        [
+          {
+            "dimensionName": "ga:dimension2",
+            "not": true,
+            "operator": "EXACT",
+            "expressions": ["mm"],
+          },
+        ],
+      "bucketName": "",
+      "fileName": "popularlist.json",
+      "pagePathLevel1RegexFilter": ["^\/story\/$"],
+      "fileHostDomainRule": { "original-url": "replaced-with-this-url" },
+      "pageSize": 10,
+    },
+}
