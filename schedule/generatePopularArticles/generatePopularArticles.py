@@ -22,8 +22,30 @@ def initialize_analyticsreporting() -> discovery.Resource:
     return analytics
 
 
-def get_report(analytics: discovery.Resource, analytics_id: str, page_size: int, date_range: tuple) -> dict:
+def get_report(analytics: discovery.Resource, analytics_id: str, page_path_level1_regex_filter: str, additional_dimension_filters: list, page_size: int, date_range: tuple) -> dict:
     # Use the Analytics Service Object to query the Analytics Reporting API V4.
+    dimensions = [{'name': 'ga:pagePathLevel2'}]
+    dimension_filters = [
+        {
+            'dimensionName': 'ga:pagePathLevel1',
+            'operator': 'REGEX',
+            'expressions': [
+                page_path_level1_regex_filter,
+            ]
+        }
+    ]
+    if additional_dimension_filters is not None:
+        for additional_dimension_filter in additional_dimension_filters:
+            dimensions.append({'name': additional_dimension_filter['name']})
+            dimension_filters.append({
+                'dimensionName': additional_dimension_filter['dimensionName'],
+                'not': additional_dimension_filter['not'] if dict.get(additional_dimension_filter,
+                                                                      'not') != None else False,
+                'operator': additional_dimension_filter['operator'] if dict.get(additional_dimension_filter,
+                                                                                'operator') != None else 'REGEX',
+                'expressions': additional_dimension_filter['expressions'],
+            })
+
     return analytics.reports().batchGet(
         body={
             'reportRequests': [
@@ -34,18 +56,11 @@ def get_report(analytics: discovery.Resource, analytics_id: str, page_size: int,
                         {'expression': 'ga:pageviews'}
                     ],
                     'orderBys': [{'fieldName': 'ga:pageviews', 'sortOrder': 'DESCENDING'}],
-                    'dimensions': [{'name': 'ga:pagePathLevel2'}],
+                    'dimensions': dimensions,
                     'dimensionFilterClauses': [
                         {
-                            'filters': [
-                                {
-                                    'dimensionName': 'ga:pagePathLevel1',
-                                    'operator': 'REGEXP',
-                                    'expressions': [
-                                        '^\/story\/|^\/projects\/'
-                                    ]
-                                }
-                            ]
+                            'operator': 'AND',
+                            'filters': dimension_filters
                         }
                     ],
                     'pageSize': page_size,
@@ -129,7 +144,7 @@ def main(config: dict, config_graphql: dict, days: int):
 
     analytics = initialize_analyticsreporting()
     response = get_report(
-        analytics, config['analyticsID'], config['report']['pageSize'], date_range)
+        analytics, config['analyticsID'], config['pagePathLevel1RegexFilter'], config['additionalDimensionFilters'], config['report']['pageSize'], date_range)
     report = convert_response_to_report(config_graphql, date_range, response)
     upload_blob(
         bucket_name=config['report']['bucketName'], destination_blob_name=config['report']['fileName'], report=report.encode('utf-8'))
