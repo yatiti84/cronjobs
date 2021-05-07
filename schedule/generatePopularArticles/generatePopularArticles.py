@@ -28,7 +28,7 @@ def get_report(analytics: discovery.Resource, analytics_id: str, page_path_level
     dimension_filters = [
         {
             'dimensionName': 'ga:pagePathLevel1',
-            'operator': 'REGEX',
+            'operator': 'REGEXP',
             'expressions': page_path_level1_regex_filter,
         }
     ]
@@ -41,7 +41,7 @@ def get_report(analytics: discovery.Resource, analytics_id: str, page_path_level
                 'not': additional_dimension_filter['not'] if dict.get(additional_dimension_filter,
                                                                       'not') != None else False,
                 'operator': additional_dimension_filter['operator'] if dict.get(additional_dimension_filter,
-                                                                                'operator') != None else 'REGEX',
+                                                                                'operator') != None else 'REGEXP',
                 'expressions': additional_dimension_filter['expressions'],
             })
     print(f'requesting report in {date_range}')
