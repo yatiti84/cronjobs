@@ -39,7 +39,7 @@ def get_report(analytics: discovery.Resource, analytics_id: str, page_size: int,
                         {
                             'filters': [
                                 {
-                                    'dimensionName': 'ga:pagePath',
+                                    'dimensionName': 'ga:pagePathLevel1',
                                     'operator': 'REGEXP',
                                     'expressions': [
                                         '^\/story\/|^\/projects\/'
