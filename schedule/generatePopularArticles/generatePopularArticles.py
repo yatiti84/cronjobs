@@ -34,7 +34,7 @@ def get_report(analytics: discovery.Resource, analytics_id: str, page_size: int,
                         {'expression': 'ga:pageviews'}
                     ],
                     'orderBys': [{'fieldName': 'ga:pageviews', 'sortOrder': 'DESCENDING'}],
-                    'dimensions': [{'name': 'ga:pagePathLevel1'}, {'name': 'ga:pagePathLevel2'}],
+                    'dimensions': [{'name': 'ga:pagePathLevel2'}],
                     'dimensionFilterClauses': [
                         {
                             'filters': [
@@ -79,7 +79,7 @@ def convert_response_to_report(config_graphql: dict, date_range: tuple, response
     data = response['reports'][0]['data']['rows']
     data = sorted(
         data, key=lambda x: int(x['metrics'][0]['values'][0]), reverse=True)
-    slugs = [item['dimensions'][1].replace('/', '') for item in data]
+    slugs = [item['dimensions'][0].replace('/', '') for item in data]
 
     result['report'] = gql.gql_query_from_slugs(
         config_graphql, config['report']['fileHostDomainRule'], slugs)
