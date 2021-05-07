@@ -144,6 +144,7 @@ def main(config: dict, config_graphql: dict, days: int):
     analytics = initialize_analyticsreporting()
     response = get_report(
         analytics, config['analyticsID'], config['report']['pagePathLevel1RegexFilter'], config['report']['additionalDimensionFilters'], config['report']['pageSize'], date_range)
+    print(f'ga response:{response}')
     report = convert_response_to_report(config_graphql, date_range, response)
     print(f'report generated: {report}')
     upload_blob(
