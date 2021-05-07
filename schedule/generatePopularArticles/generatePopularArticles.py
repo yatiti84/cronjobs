@@ -135,7 +135,7 @@ def main(config: dict, config_graphql: dict, days: int):
                    strategy=Strategy.TYPESAFE_REPLACE)
     config_graphql = merge({}, __default_graphql_cms_config, config_graphql,
                            strategy=Strategy.TYPESAFE_REPLACE)
-    if days <= 0:
+    if days < 0:
         days = 1
 
     today = date.today()
