@@ -34,7 +34,8 @@ def get_report(analytics: discovery.Resource, analytics_id: str, page_path_level
     ]
     if additional_dimension_filters is not None:
         for additional_dimension_filter in additional_dimension_filters:
-            dimensions.append({'name': additional_dimension_filter['name']})
+            dimensions.append(
+                {'name': additional_dimension_filter['dimensionName']})
             dimension_filters.append({
                 'dimensionName': additional_dimension_filter['dimensionName'],
                 'not': additional_dimension_filter['not'] if dict.get(additional_dimension_filter,
@@ -144,6 +145,7 @@ def main(config: dict, config_graphql: dict, days: int):
     response = get_report(
         analytics, config['analyticsID'], config['report']['pagePathLevel1RegexFilter'], config['report']['additionalDimensionFilters'], config['report']['pageSize'], time_range)
     report = convert_response_to_report(config_graphql, date_range, response)
+    print(f'report generated: {report}')
     upload_blob(
         bucket_name=config['report']['bucketName'], destination_blob_name=config['report']['fileName'], report=report.encode('utf-8'))
 
