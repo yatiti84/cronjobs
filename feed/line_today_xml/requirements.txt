@@ -17,7 +17,7 @@ graphql-core==3.1.2
 idna==2.10
 isort==5.5.2
 lazy-object-proxy==1.4.3
-lxml==4.6.3
+lxml==4.6.1
 mccabe==0.6.1
 multidict==5.0.2
 promise==2.3
@@ -29,11 +29,11 @@ pylint==2.6.0
 python-dateutil==2.8.1
 pytz==2020.4
 requests==2.25.0
-rsa==4.7
+rsa==4.6
 Rx==1.6.1
 six==1.15.0
 toml==0.10.1
-urllib3==1.26.4
+urllib3==1.26.2
 wrapt==1.12.1
 yarl==1.6.3
 zope.interface==5.2.0

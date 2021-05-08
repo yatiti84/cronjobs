@@ -12,14 +12,14 @@ def gql_query_from_slugs(config_graphql: dict, file_host_domain_rule: dict, slug
 
     gql_query = f"""
     query{{ 
-       allPosts(where: {{OR:[ {slug_cond} ] }}){{
-         id
-         publishTime
-         heroImage {{urlMobileSized, urlTinySized}}
-         slug
-         name
-         
-     }}
+        allPosts(where: {{OR:[ {slug_cond} ] }}){{
+            id
+            heroImage {{urlMobileSized, urlTinySized}}
+            name
+            publishTime
+            slug
+            source
+        }}
     }}
     """
     # Learn this from playground

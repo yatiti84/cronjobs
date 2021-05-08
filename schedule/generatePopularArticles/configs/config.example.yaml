@@ -2,15 +2,19 @@
   "analyticsID": "",
   "report":
     {
+      "additionalDimensionFilters":
+        [
+          {
+            "dimensionName": "ga:dimension2",
+            "not": true,
+            "operator": "EXACT",
+            "expressions": ["mm"],
+          },
+        ],
       "bucketName": "",
       "fileName": "popularlist.json",
-      "filter": ["^\/story\/|^\/projects\/"],
-      "fileHostDomainRule":
-        {
-          "https://storage.googleapis.com/mirrormedia-files": "https://www.mirrormedia.mg",
-          "https://storage.googleapis.com/static-mnews-tw-dev": "https://dev.mnews.tw",
-          "https://storage.googleapis.com/mirror-tv-file": "https://dev.mnews.tw",
-        },
-      "pageSize": 20,
+      "pagePathLevel1RegexFilter": ["^\/story\/$"],
+      "fileHostDomainRule": { "original-url": "replaced-with-this-url" },
+      "pageSize": 10,
     },
 }
