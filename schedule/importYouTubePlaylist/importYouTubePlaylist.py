@@ -116,7 +116,7 @@ def main(config: dict = None, configGraphQL: dict = None, playlistIds: list = No
             part='snippet',
             maxResults=maxNumber,
             playlistId=playlistId,
-            fields='items(snippet/title,snippet/description,snippet/thumbnails/maxres/url,snippet/resourceId/videoId)'
+            fields='items(snippet/title,snippet/description,snippet/resourceId/videoId)'
         )
         resp = requests.get(url=ytrelayPlaylistItemsAPI, params=params)
 
@@ -163,8 +163,7 @@ mutation {{
             create: {{
                 state: draft,
                 youtubeUrl: {json.dumps('https://www.youtube.com/watch?v=' + snippet['resourceId']['videoId'], ensure_ascii=False)},
-                name: {json.dumps(snippet['title'], ensure_ascii=False)},
-                thumbnail: {json.dumps(snippet['thumbnails']['default']['url'], ensure_ascii=False)}
+                name: {json.dumps(snippet['title'], ensure_ascii=False)}
             }}
         }}
     }}){{
