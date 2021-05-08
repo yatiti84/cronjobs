@@ -87,18 +87,19 @@ def upload_blob(bucket_name: str, destination_blob_name: str, report: bytes):
         f'Report is uploaded to bucket://{bucket_name}/json/{destination_blob_name}')
 
 
-def convert_response_to_report(config_graphql: dict, datetime_range, response: dict) -> str:
+def convert_response_to_report(config_graphql: dict, slugBlacklist: list, date_range: tuple, response: dict) -> str:
     '''Parse the response and generate the json format file for it'''
     result = {}
     data = response['reports'][0]['data']['rows']
     data = sorted(
         data, key=lambda x: int(x['metrics'][0]['values'][0]), reverse=True)
-    slugs = [item['dimensions'][0].replace('/', '') for item in data]
+    slugs = [item['dimensions'][0].replace(
+        '/', '') for item in data if item['dimensions'][0].replace('/') not in slugBlacklist]
 
     result['report'] = gql.gql_query_from_slugs(
         config_graphql, config['report']['fileHostDomainRule'], slugs)
-    result['start_date'] = str(datetime_range[0])
-    result['end_date'] = str(datetime_range[-1])
+    result['start_date'] = str(date_range[0])
+    result['end_date'] = str(date_range[-1])
     result['generate_time'] = str(datetime.now())
 
     return json.dumps(result, ensure_ascii=False)
@@ -113,10 +114,14 @@ __default_config = {
         'pageSize': 20,
     },
     'fileHostDomainRule': {
-        "https://storage.googleapis.com/mirrormedia-files": "https://www.mirrormedia.mg",
-        "https://storage.googleapis.com/static-mnews-tw-dev": "https://dev.mnews.tw",
+        'https://storage.googleapis.com/mirrormedia-files': 'https://www.mirrormedia.mg',
+        'https://storage.googleapis.com/static-mnews-tw-dev': 'https://dev.mnews.tw',
 
-        "https://storage.googleapis.com/mirror-tv-file": "https://dev.mnews.tw",
+        'https://storage.googleapis.com/mirror-tv-file': 'https://dev.mnews.tw',
+        'slugBlacklist':
+        [
+            'aboutus',
+        ],
     }
 }
 
@@ -145,7 +150,8 @@ def main(config: dict, config_graphql: dict, days: int):
     response = get_report(
         analytics, config['analyticsID'], config['report']['pagePathLevel1RegexFilter'], config['report']['additionalDimensionFilters'], config['report']['pageSize'], date_range)
     print(f'ga response:{response}')
-    report = convert_response_to_report(config_graphql, date_range, response)
+    report = convert_response_to_report(
+        config_graphql, config['slugBlacklist'], date_range, response)
     print(f'report generated: {report}')
     upload_blob(
         bucket_name=config['report']['bucketName'], destination_blob_name=config['report']['fileName'], report=report.encode('utf-8'))

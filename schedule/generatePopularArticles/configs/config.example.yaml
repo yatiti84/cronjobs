@@ -17,4 +17,16 @@
       "fileHostDomainRule": { "original-url": "replaced-with-this-url" },
       "pageSize": 10,
     },
+  "slugBlacklist":
+    [
+      "aboutus",
+      "ad-sales",
+      "biography",
+      "complaint",
+      "faq",
+      "press-self-regulation",
+      "privacy",
+      "standards",
+      "webauthorization",
+    ],
 }
