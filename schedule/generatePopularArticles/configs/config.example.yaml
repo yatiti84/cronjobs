@@ -13,4 +13,16 @@
         },
       "pageSize": 20,
     },
+  "slugBlacklist":
+    [
+      "aboutus",
+      "ad-sales",
+      "biography",
+      "complaint",
+      "faq",
+      "press-self-regulation",
+      "privacy",
+      "standards",
+      "webauthorization",
+    ],
 }
