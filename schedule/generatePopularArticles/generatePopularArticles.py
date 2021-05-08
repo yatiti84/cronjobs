@@ -28,7 +28,7 @@ def get_report(analytics: discovery.Resource, analytics_id: str, page_path_level
     dimension_filters = [
         {
             'dimensionName': 'ga:pagePathLevel1',
-            'operator': 'REGEX',
+            'operator': 'REGEXP',
             'expressions': page_path_level1_regex_filter,
         }
     ]
@@ -41,10 +41,10 @@ def get_report(analytics: discovery.Resource, analytics_id: str, page_path_level
                 'not': additional_dimension_filter['not'] if dict.get(additional_dimension_filter,
                                                                       'not') != None else False,
                 'operator': additional_dimension_filter['operator'] if dict.get(additional_dimension_filter,
-                                                                                'operator') != None else 'REGEX',
+                                                                                'operator') != None else 'REGEXP',
                 'expressions': additional_dimension_filter['expressions'],
             })
-
+    print(f'requesting report in {date_range}')
     return analytics.reports().batchGet(
         body={
             'reportRequests': [
@@ -140,8 +140,8 @@ def main(config: dict, config_graphql: dict, days: int):
                    strategy=Strategy.TYPESAFE_REPLACE)
     config_graphql = merge({}, __default_graphql_cms_config, config_graphql,
                            strategy=Strategy.TYPESAFE_REPLACE)
-    if days <= 0:
-        days = 2
+    if days < 0:
+        days = 1
 
     today = date.today()
     date_range = (str(today - timedelta(days=days)), str(today))
@@ -149,6 +149,7 @@ def main(config: dict, config_graphql: dict, days: int):
     analytics = initialize_analyticsreporting()
     response = get_report(
         analytics, config['analyticsID'], config['report']['pagePathLevel1RegexFilter'], config['report']['additionalDimensionFilters'], config['report']['pageSize'], date_range)
+    print(f'ga response:{response}')
     report = convert_response_to_report(
         config_graphql, config['slugBlacklist'], date_range, response)
     print(f'report generated: {report}')
