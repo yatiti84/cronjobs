@@ -59,7 +59,7 @@ def main(config: dict = None, config_graphql: dict = None, playlist_ids: list = 
     posts = get_k3_posts(
         k3_endpoint=config['sourceK3Endpoints']['posts'], max_results=max_number)
     # 2. Check post existence
-
+    slugs = [f'{config["destSlugPrefix"]}{post["slug"]}' for post in posts]
     # 3. Clean Post
     # 4. Check hero image existence
     # 5. Insert post only or insert post and image together
