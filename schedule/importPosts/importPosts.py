@@ -91,6 +91,9 @@ def main(config: dict = None, config_graphql: dict = None, playlist_ids: list = 
     slugs = [f'{config["destSlugPrefix"]}{post["slug"]}' for post in posts]
     existing_slugs_set = find_existing_slugs_set(
         config_graphql=config_graphql, slugs=slugs)
+    # isMemberOnly may not be presented for categories of NOT member only, so we set the default value of isMemberOnly to False
+    new_posts = [
+        post for post in posts if f'{config["destSlugPrefix"]}{posts["slug"]}' not in existing_slugs_set and (all([c.get('isMemberOnly', False) == False for c in post.get('categories', [{'isMemberOnly': False}])]))]
     # 3. Clean Post
     # 4. Check hero image existence
     # 5. Insert post only or insert post and image together
