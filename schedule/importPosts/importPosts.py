@@ -81,6 +81,11 @@ def find_existing_slugs_set(config_graphql: dict = None, slugs: list = []) -> se
     return set(existing_slugs)
 
 
+def is_category_not_member_only(category: dict) -> bool:
+    # is_member_only mey not be presented. In such case, we treat it as False.
+    return category.get('is_member_only') in (None, False)
+
+
 def main(config: dict = None, config_graphql: dict = None, playlist_ids: list = None, max_number: int = 3):
     ''' Import YouTube Channel program starts here '''
 
@@ -94,9 +99,9 @@ def main(config: dict = None, config_graphql: dict = None, playlist_ids: list = 
     slugs = [post['slug'] for post in posts_with_new_slug]
     existing_slugs_set = find_existing_slugs_set(
         config_graphql=config_graphql, slugs=slugs)
-    # isMemberOnly may not be presented for categories of NOT member only, so we set the default value of isMemberOnly to False
+
     new_posts = [
-        post for post in posts_with_new_slug if f'{posts["slug"]}' not in existing_slugs_set and (all([c.get('isMemberOnly', False) == False for c in post.get('categories', [{'isMemberOnly': False}])]))]
+        post for post in posts_with_new_slug if f'{posts["slug"]}' not in existing_slugs_set and (all([is_category_not_member_only(c) for c in post.get('categories', [])]))]
     # 3. Clean Post
     # 4. Check hero image existence
     # 5. Insert post only or insert post and image together
