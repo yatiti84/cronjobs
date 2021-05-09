@@ -88,12 +88,15 @@ def main(config: dict = None, config_graphql: dict = None, playlist_ids: list = 
     posts = get_k3_posts(
         k3_endpoint=config['sourceK3Endpoints']['posts'], max_results=max_number)
     # 2. Check post existence
-    slugs = [f'{config["destSlugPrefix"]}{post["slug"]}' for post in posts]
+    for post in posts:
+        post['slug']: f'{config["destSlugPrefix"]}{post["slug"]}'
+    posts_with_new_slug = post
+    slugs = [post['slug'] for post in posts_with_new_slug]
     existing_slugs_set = find_existing_slugs_set(
         config_graphql=config_graphql, slugs=slugs)
     # isMemberOnly may not be presented for categories of NOT member only, so we set the default value of isMemberOnly to False
     new_posts = [
-        post for post in posts if f'{config["destSlugPrefix"]}{posts["slug"]}' not in existing_slugs_set and (all([c.get('isMemberOnly', False) == False for c in post.get('categories', [{'isMemberOnly': False}])]))]
+        post for post in posts_with_new_slug if f'{posts["slug"]}' not in existing_slugs_set and (all([c.get('isMemberOnly', False) == False for c in post.get('categories', [{'isMemberOnly': False}])]))]
     # 3. Clean Post
     # 4. Check hero image existence
     # 5. Insert post only or insert post and image together
