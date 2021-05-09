@@ -1,3 +1,5 @@
+from gql import gql, Client
+from gql.transport.requests import RequestsHTTPTransport
 from mergedeep import merge, Strategy
 import argparse
 import json
@@ -26,10 +28,10 @@ __defaultgraphqlCmsConfig = {
     'apiEndpoint': '',
 }
 
-__queryExistingVideosTemplate = '''
+__query_existing_posts_template = '''
 query {
-  allVideos(where: {AND: [{OR: [%s]}, {OR: [{url_contains_i: "youtube"}, {url_contains_i: "youtu.be"}]}]}) {
-    url
+  allPosts(where: {AND: [{OR: [%s]}}) {
+    slug
   }
 }
 '''
@@ -52,6 +54,33 @@ def get_k3_posts(k3_endpoint: str, max_results: int = 20, sort: str = '-publishe
         return json.loads(f.read().decode('utf-8'))['_items']
 
 
+def find_existing_slugs_set(config_graphql: dict = None, slugs: list = []) -> set:
+
+    gql_endpoint = config_graphql['apiEndpoint']
+    gql_transport = RequestsHTTPTransport(
+        url=gql_endpoint,
+        use_json=True,
+        headers={
+            "Content-Type": "application/json",
+        },
+        verify=True,
+        retries=3,
+    )
+    gql_client = Client(
+        transport=gql_transport,
+        fetch_schema_from_transport=False,
+    )
+
+    # format query array
+    query_conditions = ','.join(
+        ['{slug: "%s"}' % slug for slug in slugs])
+    query = __query_existing_posts_template % query_conditions
+    # extract slugs
+    existing_slugs = [post['slug'] for post in gql_client.execute(query)[
+        'allPosts']]
+    return set(existing_slugs)
+
+
 def main(config: dict = None, config_graphql: dict = None, playlist_ids: list = None, max_number: int = 3):
     ''' Import YouTube Channel program starts here '''
 
@@ -60,6 +89,8 @@ def main(config: dict = None, config_graphql: dict = None, playlist_ids: list = 
         k3_endpoint=config['sourceK3Endpoints']['posts'], max_results=max_number)
     # 2. Check post existence
     slugs = [f'{config["destSlugPrefix"]}{post["slug"]}' for post in posts]
+    existing_slugs_set = find_existing_slugs_set(
+        config_graphql=config_graphql, slugs=slugs)
     # 3. Clean Post
     # 4. Check hero image existence
     # 5. Insert post only or insert post and image together
