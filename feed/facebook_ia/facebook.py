@@ -1,11 +1,8 @@
 import hashlib
-import json
-
+from lxml.etree import HTML
 from gql import gql, Client
 from gql.transport.requests import RequestsHTTPTransport
-from feedgen.feed import FeedGenerator
-from feedgen import util
-from dateutil import parser, tz
+from dateutil import tz
 from datetime import datetime, timezone
 from google.cloud import storage
 import gzip
@@ -14,7 +11,7 @@ BASE_URL = 'https://dev.mnews.tw/story/'
 bucket_name = "static-mnews-tw-dev"
 rss_base = 'rss'
 time_zone = tz.gettz("Asia/Taipei")
-GAID = "UA-83609754-2" # Newly set for
+GAID = "UA-83609754-2"
 GQL_API = 'https://graphql-external-dev.mnews.tw/admin/api'
 
 gql_transport = RequestsHTTPTransport(
@@ -34,10 +31,11 @@ gql_client = Client(
 
 gql_post_template = '''
 {
-    allPosts(where: {source: "tv",  state: published}, sortBy: publishTime_DESC, first: 75) {
+    allPosts(where: {source: "tv",  state: published, }, sortBy: publishTime_DESC, first: 75) {
         name
         slug
         briefApiData
+        briefHtml
         heroImage {
             urlOriginal
         }  
@@ -74,12 +72,31 @@ op_tracker = f"""
 </figure>
 """
 
+def gql_call():
+    query = gql(gql_post_template)
+    result = gql_client.execute(query)
+    return result
+
+def upload_data(bucket_name: str, data: bytes, content_type: str, destination_blob_name: str):
+    '''Uploads a file to the bucket.'''
+    # bucket_name = 'your-bucket-name'
+    # data = 'storage-object-content'
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(bucket_name)
+    blob = bucket.blob(destination_blob_name)
+    blob.content_encoding = 'gzip'
+    blob.upload_from_string(
+        data=gzip.compress(data=data, compresslevel=9), content_type=content_type, client=storage_client)
+    blob.content_language = 'zh'
+    blob.cache_control = 'max-age=300,public'
+    blob.patch()
+
 def parse_item(item):
     name = item['name']
     publish_time = item['publishTime']  # Should be in ISO format
     guid = hashlib.sha224((BASE_URL + item['slug']).encode()).hexdigest()
-    brief = item['brief']
-    article_body = item[''] # Brief? Should I parse html?
+    brief = item['briefApiData']
+    article_body = parse_html(item)
     return f"""
     <item>
       {op_tracker}
@@ -87,7 +104,6 @@ def parse_item(item):
       <link>http://example.com/article.html</link>
       <guid>{guid}</guid>
       <pubDate>{publish_time}</pubDate>
-      <author>Mr. Author</author>
       <description>{brief}</description>
       <content:encoded>
         <![CDATA[
@@ -115,6 +131,17 @@ def parse_item(item):
     </item>
     """
 
+def parse_html(item):
+    if item.get('briefHtml',''):
+        html = HTML(item['briefHtml'])
+        if html.xpath('//text()'):
+            article_body = html.xpath('//text()')[0]
+        else:
+            article_body = ''
+    else:
+        article_body = ''
+    return article_body
+
 
 def main():
     # global result, item
@@ -135,22 +162,8 @@ xmlns:content="http://purl.org/rss/1.0/modules/content/">
   </channel>
 </rss>
     """
-    rss = fg.rss_str(pretty=False, encoding='UTF-8', xml_declaration=True)
-    fg.rss_file('./facebook_ia_rss.xml')
-
-    # From rss remplate export to string
-    with open('./facebook_ia_rss.xml') as f:
-        f.write(rss_string)
-
-
-def gql_call():
-    # global result
-    query = gql(gql_post_template)
-    result = gql_client.execute(query)
-    return result
-
+    upload_data(bucket_name=bucket_name, data=rss_string, content_type='application/rss+xml',
+        destination_blob_name=rss_base +'facebook_ia_rss.xml')
 
 if __name__ == '__main__':
-    # main()
-    result = gql_call()
-    print(result)
+    main()
