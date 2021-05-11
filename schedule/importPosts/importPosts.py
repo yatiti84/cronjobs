@@ -100,17 +100,22 @@ def convert_and_clean_post_for_k5(posts: list, delegated_writer: int) -> list:
     for post in posts:
         new_post = {}
         convert_hero_image(post.get('heroImage', None), new_post)
-        new_post['brief'] = json.dumps(
-            post['brief']['draft'], ensure_ascii=False)
-        new_post['briefApiData'] = post['brief']['apiData']
-        new_post['briefHtml'] = post['brief']['html']
-        new_post['content'] = json.dumps(
-            post['content']['draft'], ensure_ascii=False)
-        new_post['contentApiData'] = post['content']['apiData']
-        new_post['contentHtml'] = post['content']['html']
-        new_post['heroCaption'] = post.get('heroCaption', None)
-        new_post['name'] = post['title']
-        new_post['slug'] = post['slug']
+        new_post['briefJsonStr'] = json.dumps(json.dumps(
+            post['brief']['draft'], ensure_ascii=False), ensure_ascii=False)
+        new_post['briefApiDataJsonStr'] = json.dumps(json.dumps(
+            post['brief']['apiData'], ensure_ascii=False), ensure_ascii=False)
+        new_post['briefHtmlJsonStr'] = json.dumps(
+            post['brief']['html'], ensure_ascii=False)
+        new_post['contentJsonStr'] = json.dumps(json.dumps(
+            post['content']['draft'], ensure_ascii=False), ensure_ascii=False)
+        new_post['contentApiDataJsonStr'] = json.dumps(json.dumps(
+            post['content']['apiData'], ensure_ascii=False), ensure_ascii=False)
+        new_post['contentHtmlJsonStr'] = json.dumps(
+            post['content']['html'], ensure_ascii=False)
+        new_post['heroCaptionJsonStr'] = json.dumps(
+            post.get('heroCaption', None), ensure_ascii=False)
+        new_post['nameJsonStr'] = json.dumps(post['title'], ensure_ascii=False)
+        new_post['slugJsonStr'] = json.dumps(post['slug'], ensure_ascii=False)
         new_post['writer'] = delegated_writer
         new_posts.append(new_post)
 
