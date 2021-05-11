@@ -125,6 +125,53 @@ def is_category_not_member_only(category: dict) -> bool:
     return category.get('is_member_only') in (None, False)
 
 
+def create_authenticated_k5_client(config_graphql: dict) -> Client:
+    logger = logging.getLogger(__main__.__file__)
+    # Authenticate through GraphQL
+
+    gql_endpoint = config_graphql['apiEndpoint']
+    gql_transport = RequestsHTTPTransport(
+        url=gql_endpoint,
+        use_json=True,
+        headers={
+            "Content-type": "application/json",
+        },
+        verify=True,
+        retries=3,
+    )
+    gql_client = Client(
+        transport=gql_transport,
+        fetch_schema_from_transport=False,
+    )
+    qgl_mutation_authenticate_get_token = '''
+    mutation {
+        authenticate: authenticateUserWithPassword(email: "%s", password: "%s") {
+            token
+        }
+    }
+    '''
+    mutation = gql(qgl_mutation_authenticate_get_token %
+                   (config_graphql['username'], config_graphql['password']))
+
+    token = gql_client.execute(mutation)['authenticate']['token']
+
+    gql_transport_with_token = RequestsHTTPTransport(
+        url=gql_endpoint,
+        use_json=True,
+        headers={
+            "Content-type": "application/json",
+            'Authorization': f'Bearer {token}'
+        },
+        verify=True,
+        retries=3,
+    )
+
+    return Client(
+        transport=gql_transport_with_token,
+        fetch_schema_from_transport=False,
+    )
+
+
 def main(config: dict = None, config_graphql: dict = None, playlist_ids: list = None, max_number: int = 3):
     ''' Import YouTube Channel program starts here '''
     logger = logging.getLogger(__main__.__file__)
