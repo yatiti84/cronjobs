@@ -223,6 +223,58 @@ def create_and_get_image_id(client: Client, image: dict, file_host_domain_rule: 
     return id
 
 
+def insert_post_to_k5(client: Client, post: dict, file_host_domain_rule: dict):
+    logger = logging.getLogger(__main__.__file__)
+    # check image existent
+    if post.get('heroImage') != None:
+        hero_image_id = create_and_get_image_id(client, post.get(
+            'heroImage'), file_host_domain_rule)
+        create_post_mutation = f'''
+        mutation {{
+            createPost(data: {{
+                slug: {post["slugJsonStr"]},
+                state: draft,
+                name: {post["nameJsonStr"]},
+                writers: {{
+                    connect:{{
+                        id: {post['writer']}
+                    }}
+                }},
+                heroImage: {{
+                    connect: {{
+                        id: {hero_image_id}
+                        }}
+                    }},
+                heroCaption: {post["heroCaptionJsonStr"]},
+                brief: {post["briefJsonStr"]},
+                briefHtml: {post["briefHtmlJsonStr"]},
+                briefApiData: {post["briefApiDataJsonStr"]},
+                content: {post["contentJsonStr"]},
+                contentHtml: {post["contentHtmlJsonStr"]},
+                contentApiData: {post["contentApiDataJsonStr"]},
+                source: "{config['source']}"
+            }}) {{
+                id
+                slug
+                name
+            }}
+        }}'''
+
+        created_post = client.execute(gql(create_post_mutation))['createPost']
+        logger.info(f'post created: {created_post}')
+
+
+def insert_posts_to_k5(config_graphql: dict, file_host_domain_rule: dict, posts: list):
+    logger = logging.getLogger(__main__.__file__)
+    # Authenticate through GraphQL
+    authenticated_graphql_client = create_authenticated_k5_client(
+        config_graphql)
+    logger.info(f'login as {config_graphql["username"]}')
+    for post in posts:
+        insert_post_to_k5(authenticated_graphql_client,
+                          post, file_host_domain_rule)
+
+
 def main(config: dict = None, config_graphql: dict = None, playlist_ids: list = None, max_number: int = 3):
     ''' Import YouTube Channel program starts here '''
     logger = logging.getLogger(__main__.__file__)
@@ -252,8 +304,8 @@ def main(config: dict = None, config_graphql: dict = None, playlist_ids: list = 
     # 3. Generate and clean up Posts for k5
     k5_posts = convert_and_clean_post_for_k5(new_posts, config['writerID'])
     logger.info(f'posts generated for k5:{k5_posts}')
-    # 4. Check hero image existence
-    # 5. Insert post only or insert post and image together
+    # 4. Insert post only or insert post and image together
+    insert_posts_to_k5(config_graphql, config['fileHostDomainRule'], k5_posts)
 
     # merge option to the default configs
     config = merge({}, __defaultConfig, config,
