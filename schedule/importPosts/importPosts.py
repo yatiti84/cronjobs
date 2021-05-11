@@ -141,10 +141,10 @@ def create_authenticated_k5_client(config_graphql: dict) -> Client:
         }
     }
     '''
-    mutation = gql(qgl_mutation_authenticate_get_token %
-                   (config_graphql['username'], config_graphql['password']))
+    mutation = qgl_mutation_authenticate_get_token % (
+        config_graphql['username'], config_graphql['password'])
 
-    token = gql_client.execute(mutation)['authenticate']['token']
+    token = gql_client.execute(gql(mutation))['authenticate']['token']
 
     gql_transport_with_token = AIOHTTPTransport(
         url=gql_endpoint,
