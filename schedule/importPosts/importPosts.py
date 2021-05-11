@@ -16,7 +16,7 @@ CONFIG_KEY = 'config'
 GRAPHQL_CMS_CONFIG_KEY = 'graphqlCMS'
 MAX_NUMBER_KEY = 'maxNumber'
 
-__defaultConfig = {
+__default_config = {
     "sourceK3Endpoints":
     {
         "list": "https://api.mirrormedia.mg/getlist",
@@ -26,7 +26,7 @@ __defaultConfig = {
     "destSlugPrefix": "mm-",
 }
 
-__defaultgraphqlCmsConfig = {
+__default_graphql_cms_config = {
     'username': '',
     'password': '',
     'apiEndpoint': '',
@@ -279,6 +279,12 @@ def main(config: dict = None, config_graphql: dict = None, playlist_ids: list = 
     ''' Import YouTube Channel program starts here '''
     logger = logging.getLogger(__main__.__file__)
 
+    # merge option to the default configs
+    config = merge({}, __default_config, config,
+                   strategy=Strategy.TYPESAFE_REPLACE)
+    config_graphql = merge({}, __default_graphql_cms_config, config_graphql,
+                           strategy=Strategy.TYPESAFE_REPLACE)
+
     # 1. request https://api.mirrormedia.mg/getposts?where={"state": "published"}&max_results=100&sort=-publishedDate&populate=categories,heroImage
     posts = get_k3_posts(
         k3_endpoint=config['sourceK3Endpoints']['posts'], max_results=max_number)
@@ -306,12 +312,6 @@ def main(config: dict = None, config_graphql: dict = None, playlist_ids: list = 
     logger.info(f'posts generated for k5:{k5_posts}')
     # 4. Insert post only or insert post and image together
     insert_posts_to_k5(config_graphql, config['fileHostDomainRule'], k5_posts)
-
-    # merge option to the default configs
-    config = merge({}, __defaultConfig, config,
-                   strategy=Strategy.TYPESAFE_REPLACE)
-    config_graphql = merge({}, __defaultgraphqlCmsConfig, config_graphql,
-                           strategy=Strategy.TYPESAFE_REPLACE)
 
 
 logging.basicConfig(level=logging.INFO)
