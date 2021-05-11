@@ -233,4 +233,4 @@ if __name__ == '__main__':
         config_graphql = yaml.safe_load(stream)
     max_number = getattr(args, MAX_NUMBER_KEY)
 
-    main(config, config_graphql, max_number)
+    main(config=config, config_graphql=config_graphql, max_number=max_number)
