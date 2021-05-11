@@ -1,8 +1,11 @@
+from datetime import datetime
 from gql import gql, Client
 from gql.transport.aiohttp import AIOHTTPTransport
 from mergedeep import merge, Strategy
 import __main__
+import aiohttp
 import argparse
+import io
 import json
 import logging
 import sys
@@ -156,6 +159,63 @@ def create_authenticated_k5_client(config_graphql: dict) -> Client:
         execute_timeout=60,
         fetch_schema_from_transport=False,
     )
+
+
+def convert_file_url_base(file_host_domain_rule: dict, url: str) -> str:
+    for key in file_host_domain_rule.keys():
+        url = url.replace(key, file_host_domain_rule[key], 1)
+    return url
+
+
+__query_images_by_name_template = '''query {
+  allImages(where: {name: "%s"}) {
+    id
+  }
+}
+'''
+
+__mutation_create_image_for_id_template = '''mutation {
+    allImages(where: {name: "%s"}) {
+        id
+    }
+}
+'''
+
+
+def create_and_get_image_id(client: Client, image: dict, file_host_domain_rule: dict) -> id:
+    logger = logging.getLogger(__main__.__file__)
+    query_image_ids_by_name = __query_images_by_name_template % image['name']
+    images = client.execute(gql(query_image_ids_by_name))['allImages']
+    logger.info(len(images))
+    if len(images) == 0:
+        # create images
+        # FIXME it's a workaround to raise error on server side so that the image data won't be overwritten by the server
+        params = {"file": io.StringIO('')}
+        create_image_mutation = f'''
+        mutation($file: Upload!) {{
+            createImage (data:{{
+                name: {json.dumps(image['name'], ensure_ascii=False)},
+                file: $file,
+                meta: {json.dumps(image['meta'], ensure_ascii=False)},
+                urlOriginal: {json.dumps(image['urlOriginal'], ensure_ascii=False)},
+                urlDesktopSized: {json.dumps(convert_file_url_base(file_host_domain_rule, image['urlDesktopSized']), ensure_ascii=False)},
+                urlMobileSized: {json.dumps(convert_file_url_base(file_host_domain_rule, image['urlMobileSized']), ensure_ascii=False)},
+                urlTabletSized: {json.dumps(convert_file_url_base(file_host_domain_rule, image['urlTabletSized']), ensure_ascii=False)},
+                urlTinySized: {json.dumps(convert_file_url_base(file_host_domain_rule, image['urlTinySized']), ensure_ascii=False)},
+            }}) {{
+                id
+            }}
+        }}'''
+        logger.debug(datetime.now())
+        id = client.execute(
+            gql(create_image_mutation), variable_values=params, upload_files=True)['createImage']['id']
+        logger.debug(datetime.now())
+        logger.info(f'created image(id:{id})')
+
+    else:
+        id = images[0]['id']
+
+    return id
 
 
 def main(config: dict = None, config_graphql: dict = None, playlist_ids: list = None, max_number: int = 3):
