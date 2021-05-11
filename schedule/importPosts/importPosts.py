@@ -103,7 +103,7 @@ def main(config: dict = None, config_graphql: dict = None, playlist_ids: list = 
         config_graphql=config_graphql, slugs=slugs)
 
     new_posts = [
-        post for post in posts_with_new_slug if f'{posts["slug"]}' not in existing_slugs_set and (all([is_category_not_member_only(c) for c in post.get('categories', [])]))]
+        post for post in posts_with_new_slug if f'{post["slug"]}' not in existing_slugs_set and (all([is_category_not_member_only(c) for c in post.get('categories', [])]))]
 
     logger.info(f'news posts:{new_posts}')
     # 3. Clean Post
