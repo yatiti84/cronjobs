@@ -20,10 +20,19 @@ __default_config = {
     "sourceK3Endpoints":
     {
         "list": "https://api.mirrormedia.mg/getlist",
-        "posts": "https://api.mirrormedia.mg/getposts",
+        "posts": "https://api.mirrormedia.mg/drafts",
     },
     "author": "鏡週刊",
+    "writerID": 201,
+    "source": "mm",
     "destSlugPrefix": "mm-",
+    "fileHostDomainRule":
+    {
+        "https://storage.googleapis.com/mirrormedia-files": "https://www.mirrormedia.mg",
+        "https://storage.googleapis.com/static-mnews-tw-prod": "https://statics.mnews.tw",
+        "https://storage.googleapis.com/static-mnews-tw-dev": "https://dev.mnews.tw",
+        "https://storage.googleapis.com/static-mnews-tw-stag": "https://www-stag.mnews.tw",
+    },
 }
 
 __default_graphql_cms_config = {
