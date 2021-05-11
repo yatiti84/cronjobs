@@ -73,10 +73,11 @@ def find_existing_slugs_set(config_graphql: dict = None, slugs: list = []) -> se
     query_conditions = ','.join(
         ['{slug: "%s"}' % slug for slug in slugs])
     query = __query_existing_posts_template % query_conditions
-    logger.info(f'query slugs for existence:{query}')
+    logger.info(f'query slugs for existence...')
     # extract slugs
     existing_slugs = [post['slug'] for post in gql_client.execute(gql(query))[
         'allPosts']]
+    logger.info(f'existing_slugs:{existing_slugs}')
     return set(existing_slugs)
 
 
@@ -194,7 +195,7 @@ def create_and_get_image_id(client: Client, image: dict, file_host_domain_rule: 
     logger.setLevel('INFO')
     query_image_ids_by_name = __query_images_by_name_template % image['name']
     images = client.execute(gql(query_image_ids_by_name))['allImages']
-    logger.info(len(images))
+
     if len(images) == 0:
         # create images
         # FIXME it's a workaround to raise error on server side so that the image data won't be overwritten by the server
@@ -211,15 +212,15 @@ def create_and_get_image_id(client: Client, image: dict, file_host_domain_rule: 
                 urlTabletSized: {json.dumps(convert_file_url_base(file_host_domain_rule, image['urlTabletSized']), ensure_ascii=False)},
                 urlTinySized: {json.dumps(convert_file_url_base(file_host_domain_rule, image['urlTinySized']), ensure_ascii=False)},
             }}) {{
+                name
                 id
             }}
         }}'''
-        logger.debug(datetime.now())
-        id = client.execute(
-            gql(create_image_mutation), variable_values=params, upload_files=True)['createImage']['id']
-        logger.debug(datetime.now())
-        logger.info(f'created image(id:{id})')
-
+        created_image = client.execute(
+            gql(create_image_mutation), variable_values=params, upload_files=True)['createImage']
+        id = created_image['id']
+        logger.info(
+            f'created image(id:{created_image["id"]}, name:{created_image["name"]})')
     else:
         id = images[0]['id']
 
@@ -327,7 +328,7 @@ def main(config: dict = None, config_graphql: dict = None, playlist_ids: list = 
     new_posts = [
         post for post in posts_with_new_slug if f'{post["slug"]}' not in existing_slugs_set and (all([is_category_not_member_only(c) for c in post.get('categories', [])]))]
 
-    logger.info(f'news posts:{new_posts}')
+    logger.info(f'news post slugs:{[post["slug"] for post in new_posts]}')
     # 3. Generate and clean up Posts for k5
     k5_posts = convert_and_clean_post_for_k5(new_posts, config['writerID'])
     logger.info(f'posts generated for k5:{k5_posts}')
