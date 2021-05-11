@@ -264,6 +264,18 @@ def insert_post_to_k5(client: Client, post: dict, file_host_domain_rule: dict):
         logger.info(f'post created: {created_post}')
 
 
+def k5_signout(client: Client):
+    logger = logging.getLogger(__main__.__file__)
+    unauthenticate_mutation = '''
+    mutation {
+        unauthenticate: unauthenticateUser {
+            success
+        }
+    }'''
+    result = client.execute(gql(unauthenticate_mutation))
+    logger.info(result)
+
+
 def insert_posts_to_k5(config_graphql: dict, file_host_domain_rule: dict, posts: list):
     logger = logging.getLogger(__main__.__file__)
     # Authenticate through GraphQL
@@ -273,6 +285,8 @@ def insert_posts_to_k5(config_graphql: dict, file_host_domain_rule: dict, posts:
     for post in posts:
         insert_post_to_k5(authenticated_graphql_client,
                           post, file_host_domain_rule)
+
+    k5_signout(authenticated_graphql_client)
 
 
 def main(config: dict = None, config_graphql: dict = None, playlist_ids: list = None, max_number: int = 3):
