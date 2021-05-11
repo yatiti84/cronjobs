@@ -81,6 +81,44 @@ def find_existing_slugs_set(config_graphql: dict = None, slugs: list = []) -> se
     return set(existing_slugs)
 
 
+def convert_hero_image(image_src: dict, post_dest: dict):
+    if image_src != None:
+        post_dest['heroImage'] = {
+            'name': image_src['description'],
+            'filename': image_src['image']['filename'],
+            'file': json.dumps(image_src['image'], ensure_ascii=False),
+            'meta': image_src['image']['filetype'],
+            'urlOriginal': image_src['image']['url'],
+            'urlDesktopSized': image_src['image']['resizedTargets']['desktop']['url'],
+            'urlMobileSized': image_src['image']['resizedTargets']['mobile']['url'],
+            'urlTabletSized': image_src['image']['resizedTargets']['tablet']['url'],
+            'urlTinySized': image_src['image']['resizedTargets']['tiny']['url'],
+        }
+
+
+def convert_and_clean_post_for_k5(posts: list, delegated_writers: list) -> list:
+    new_posts = []
+
+    for post in posts:
+        new_post = {}
+        convert_hero_image(post.get('heroImage', None), new_post)
+        new_post['brief'] = json.dumps(
+            post['brief']['draft'], ensure_ascii=False)
+        new_post['briefApiData'] = post['brief']['apiData']
+        new_post['briefHtml'] = post['brief']['html']
+        new_post['content'] = json.dumps(
+            post['content']['draft'], ensure_ascii=False)
+        new_post['contentApiData'] = post['content']['apiData']
+        new_post['contentHtml'] = post['content']['html']
+        new_post['heroCaption'] = post.get('heroCaption', None)
+        new_post['name'] = post['title']
+        new_post['slug'] = post['slug']
+        new_post['writers'] = delegated_writers
+        new_posts.append(new_post)
+
+    return new_posts
+
+
 def is_category_not_member_only(category: dict) -> bool:
     # is_member_only mey not be presented. In such case, we treat it as False.
     return category.get('is_member_only') in (None, False)
@@ -112,7 +150,9 @@ def main(config: dict = None, config_graphql: dict = None, playlist_ids: list = 
         post for post in posts_with_new_slug if f'{post["slug"]}' not in existing_slugs_set and (all([is_category_not_member_only(c) for c in post.get('categories', [])]))]
 
     logger.info(f'news posts:{new_posts}')
-    # 3. Clean Post
+    # 3. Generate and clean up Posts for k5
+    k5_posts = convert_and_clean_post_for_k5(new_posts, config['writers'])
+    logger.info(f'posts generated for k5:{k5_posts}')
     # 4. Check hero image existence
     # 5. Insert post only or insert post and image together
 
