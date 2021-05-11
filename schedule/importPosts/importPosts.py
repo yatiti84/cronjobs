@@ -43,6 +43,7 @@ __query_existing_posts_template = '''query {
 def get_k3_posts(k3_endpoint: str, max_results: int = 20, sort: str = '-publishedDate', populate: str = 'categories,heroImage') -> dict:
     '''getK3Posts get posts from k3'''
     logger = logging.getLogger(__main__.__file__)
+    logger.setLevel('INFO')
     url = f'{k3_endpoint}?where={{"state":"published"}}&max_results={max_results}&sort={sort}&populate={populate}'
     logger.info(f'sending request:{url}')
     print
@@ -129,6 +130,7 @@ def is_category_not_member_only(category: dict) -> bool:
 
 def create_authenticated_k5_client(config_graphql: dict) -> Client:
     logger = logging.getLogger(__main__.__file__)
+    logger.setLevel('INFO')
     # Authenticate through GraphQL
 
     gql_endpoint = config_graphql['apiEndpoint']
@@ -189,6 +191,7 @@ __mutation_create_image_for_id_template = '''mutation {
 
 def create_and_get_image_id(client: Client, image: dict, file_host_domain_rule: dict) -> id:
     logger = logging.getLogger(__main__.__file__)
+    logger.setLevel('INFO')
     query_image_ids_by_name = __query_images_by_name_template % image['name']
     images = client.execute(gql(query_image_ids_by_name))['allImages']
     logger.info(len(images))
@@ -225,6 +228,7 @@ def create_and_get_image_id(client: Client, image: dict, file_host_domain_rule: 
 
 def insert_post_to_k5(client: Client, post: dict, file_host_domain_rule: dict):
     logger = logging.getLogger(__main__.__file__)
+    logger.setLevel('INFO')
     # check image existent
     if post.get('heroImage') != None:
         hero_image_id = create_and_get_image_id(client, post.get(
@@ -266,6 +270,7 @@ def insert_post_to_k5(client: Client, post: dict, file_host_domain_rule: dict):
 
 def k5_signout(client: Client):
     logger = logging.getLogger(__main__.__file__)
+    logger.setLevel('INFO')
     unauthenticate_mutation = '''
     mutation {
         unauthenticate: unauthenticateUser {
@@ -278,6 +283,7 @@ def k5_signout(client: Client):
 
 def insert_posts_to_k5(config_graphql: dict, file_host_domain_rule: dict, posts: list):
     logger = logging.getLogger(__main__.__file__)
+    logger.setLevel('INFO')
     # Authenticate through GraphQL
     authenticated_graphql_client = create_authenticated_k5_client(
         config_graphql)
@@ -292,6 +298,7 @@ def insert_posts_to_k5(config_graphql: dict, file_host_domain_rule: dict, posts:
 def main(config: dict = None, config_graphql: dict = None, playlist_ids: list = None, max_number: int = 3):
     ''' Import YouTube Channel program starts here '''
     logger = logging.getLogger(__main__.__file__)
+    logger.setLevel('INFO')
 
     # merge option to the default configs
     config = merge({}, __default_config, config,
@@ -328,10 +335,11 @@ def main(config: dict = None, config_graphql: dict = None, playlist_ids: list = 
     insert_posts_to_k5(config_graphql, config['fileHostDomainRule'], k5_posts)
 
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig()
 
 if __name__ == '__main__':
     logger = logging.getLogger(__main__.__file__)
+    logger.setLevel('INFO')
     logger.info(f'{__file__} is executing...')
     parser = argparse.ArgumentParser(
         description='Process configuration of importPosts')
@@ -351,3 +359,5 @@ if __name__ == '__main__':
     max_number = getattr(args, MAX_NUMBER_KEY)
 
     main(config=config, config_graphql=config_graphql, max_number=max_number)
+
+    logger.info('exiting...good bye...')
