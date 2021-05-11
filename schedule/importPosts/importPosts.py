@@ -113,6 +113,8 @@ def main(config: dict = None, config_graphql: dict = None, playlist_ids: list = 
                            strategy=Strategy.TYPESAFE_REPLACE)
 
 
+logging.basicConfig(level=logging.INFO)
+
 if __name__ == '__main__':
     logger = logging.getLogger(__name__)
     logger.info(f'{__file__} is executing...')
