@@ -1,6 +1,7 @@
 from gql import gql, Client
 from gql.transport.requests import RequestsHTTPTransport
 from mergedeep import merge, Strategy
+import __main__
 import argparse
 import json
 import logging
@@ -38,7 +39,7 @@ __query_existing_posts_template = '''query {
 
 def get_k3_posts(k3_endpoint: str, max_results: int = 20, sort: str = '-publishedDate', populate: str = 'categories,heroImage') -> dict:
     '''getK3Posts get posts from k3'''
-    logger = logging.getLogger(__name__)
+    logger = logging.getLogger(__main__.__file__)
     url = f'{k3_endpoint}?where={{"state":"published"}}&max_results={max_results}&sort={sort}&populate={populate}'
     logger.info(f'sending request:{url}')
     print
@@ -126,7 +127,7 @@ def is_category_not_member_only(category: dict) -> bool:
 
 def main(config: dict = None, config_graphql: dict = None, playlist_ids: list = None, max_number: int = 3):
     ''' Import YouTube Channel program starts here '''
-    logger = logging.getLogger(__name__)
+    logger = logging.getLogger(__main__.__file__)
 
     # 1. request https://api.mirrormedia.mg/getposts?where={"state": "published"}&max_results=100&sort=-publishedDate&populate=categories,heroImage
     posts = get_k3_posts(
@@ -166,7 +167,7 @@ def main(config: dict = None, config_graphql: dict = None, playlist_ids: list = 
 logging.basicConfig(level=logging.INFO)
 
 if __name__ == '__main__':
-    logger = logging.getLogger(__name__)
+    logger = logging.getLogger(__main__.__file__)
     logger.info(f'{__file__} is executing...')
     parser = argparse.ArgumentParser(
         description='Process configuration of importPosts')
