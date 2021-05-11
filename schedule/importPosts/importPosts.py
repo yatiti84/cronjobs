@@ -76,7 +76,7 @@ def find_existing_slugs_set(config_graphql: dict = None, slugs: list = []) -> se
     query = __query_existing_posts_template % query_conditions
     logger.info(f'query slugs for existence:{query}')
     # extract slugs
-    existing_slugs = [post['slug'] for post in gql_client.execute(query)[
+    existing_slugs = [post['slug'] for post in gql_client.execute(gql(query))[
         'allPosts']]
     return set(existing_slugs)
 
