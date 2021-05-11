@@ -94,7 +94,7 @@ def convert_hero_image(image_src: dict, post_dest: dict):
         }
 
 
-def convert_and_clean_post_for_k5(posts: list, delegated_writers: list) -> list:
+def convert_and_clean_post_for_k5(posts: list, delegated_writer: int) -> list:
     new_posts = []
 
     for post in posts:
@@ -111,7 +111,7 @@ def convert_and_clean_post_for_k5(posts: list, delegated_writers: list) -> list:
         new_post['heroCaption'] = post.get('heroCaption', None)
         new_post['name'] = post['title']
         new_post['slug'] = post['slug']
-        new_post['writers'] = delegated_writers
+        new_post['writer'] = delegated_writer
         new_posts.append(new_post)
 
     return new_posts
@@ -245,7 +245,7 @@ def main(config: dict = None, config_graphql: dict = None, playlist_ids: list = 
 
     logger.info(f'news posts:{new_posts}')
     # 3. Generate and clean up Posts for k5
-    k5_posts = convert_and_clean_post_for_k5(new_posts, config['writers'])
+    k5_posts = convert_and_clean_post_for_k5(new_posts, config['writerID'])
     logger.info(f'posts generated for k5:{k5_posts}')
     # 4. Check hero image existence
     # 5. Insert post only or insert post and image together
