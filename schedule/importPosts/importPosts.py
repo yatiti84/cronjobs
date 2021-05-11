@@ -28,9 +28,8 @@ __defaultgraphqlCmsConfig = {
     'apiEndpoint': '',
 }
 
-__query_existing_posts_template = '''
-query {
-  allPosts(where: {AND: [{OR: [%s]}}) {
+__query_existing_posts_template = '''query {
+  allPosts(where: {AND: [{OR: [%s]}]}) {
     slug
   }
 }
@@ -75,6 +74,7 @@ def find_existing_slugs_set(config_graphql: dict = None, slugs: list = []) -> se
     query_conditions = ','.join(
         ['{slug: "%s"}' % slug for slug in slugs])
     query = __query_existing_posts_template % query_conditions
+    logger.info(f'query slugs for existence:{query}')
     # extract slugs
     existing_slugs = [post['slug'] for post in gql_client.execute(query)[
         'allPosts']]
