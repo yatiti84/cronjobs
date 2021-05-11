@@ -97,6 +97,12 @@ def main(config: dict = None, config_graphql: dict = None, playlist_ids: list = 
     posts_with_new_slug = posts
     for i in range(len(posts_with_new_slug)):
         posts_with_new_slug[i]['slug'] = f'{config["destSlugPrefix"]}{posts_with_new_slug[i]["slug"]}'
+        try:
+            posts_with_new_slug[i]['heroImage'][
+                'description'] = f'{config["destSlugPrefix"]}{posts_with_new_slug[i]["heroImage"]["description"]}'
+        except:
+            # in case of posts without heroimage
+            pass
 
     slugs = [post['slug'] for post in posts_with_new_slug]
     existing_slugs_set = find_existing_slugs_set(
