@@ -88,6 +88,7 @@ def is_category_not_member_only(category: dict) -> bool:
 
 def main(config: dict = None, config_graphql: dict = None, playlist_ids: list = None, max_number: int = 3):
     ''' Import YouTube Channel program starts here '''
+    logger = logging.getLogger(__name__)
 
     # 1. request https://api.mirrormedia.mg/getposts?where={"state": "published"}&max_results=100&sort=-publishedDate&populate=categories,heroImage
     posts = get_k3_posts(
@@ -103,6 +104,8 @@ def main(config: dict = None, config_graphql: dict = None, playlist_ids: list = 
 
     new_posts = [
         post for post in posts_with_new_slug if f'{posts["slug"]}' not in existing_slugs_set and (all([is_category_not_member_only(c) for c in post.get('categories', [])]))]
+
+    logger.info(f'news posts:{new_posts}')
     # 3. Clean Post
     # 4. Check hero image existence
     # 5. Insert post only or insert post and image together
