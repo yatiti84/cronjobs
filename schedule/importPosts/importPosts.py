@@ -1,5 +1,5 @@
 from gql import gql, Client
-from gql.transport.requests import RequestsHTTPTransport
+from gql.transport.aiohttp import AIOHTTPTransport
 from mergedeep import merge, Strategy
 import __main__
 import argparse
@@ -57,14 +57,8 @@ def get_k3_posts(k3_endpoint: str, max_results: int = 20, sort: str = '-publishe
 def find_existing_slugs_set(config_graphql: dict = None, slugs: list = []) -> set:
 
     gql_endpoint = config_graphql['apiEndpoint']
-    gql_transport = RequestsHTTPTransport(
+    gql_transport = AIOHTTPTransport(
         url=gql_endpoint,
-        use_json=True,
-        headers={
-            "Content-Type": "application/json",
-        },
-        verify=True,
-        retries=3,
     )
     gql_client = Client(
         transport=gql_transport,
@@ -130,14 +124,8 @@ def create_authenticated_k5_client(config_graphql: dict) -> Client:
     # Authenticate through GraphQL
 
     gql_endpoint = config_graphql['apiEndpoint']
-    gql_transport = RequestsHTTPTransport(
+    gql_transport = AIOHTTPTransport(
         url=gql_endpoint,
-        use_json=True,
-        headers={
-            "Content-type": "application/json",
-        },
-        verify=True,
-        retries=3,
     )
     gql_client = Client(
         transport=gql_transport,
@@ -155,19 +143,17 @@ def create_authenticated_k5_client(config_graphql: dict) -> Client:
 
     token = gql_client.execute(mutation)['authenticate']['token']
 
-    gql_transport_with_token = RequestsHTTPTransport(
+    gql_transport_with_token = AIOHTTPTransport(
         url=gql_endpoint,
-        use_json=True,
         headers={
-            "Content-type": "application/json",
             'Authorization': f'Bearer {token}'
         },
-        verify=True,
-        retries=3,
+        timeout=60
     )
 
     return Client(
         transport=gql_transport_with_token,
+        execute_timeout=60,
         fetch_schema_from_transport=False,
     )
 
