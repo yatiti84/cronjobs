@@ -40,7 +40,7 @@ query {
 def get_k3_posts(k3_endpoint: str, max_results: int = 20, sort: str = '-publishedDate', populate: str = 'categories,heroImage') -> dict:
     '''getK3Posts get posts from k3'''
     logger = logging.getLogger(__name__)
-    url = f'{k3_endpoint}?where={"state": "published"}&max_results={max_results}&sort={sort}&populate={populate}'
+    url = f'{k3_endpoint}?where={{"state":"published"}}&max_results={max_results}&sort={sort}&populate={populate}'
     logger.info(f'sending request:{url}')
     print
     req = urllib.request.Request(
@@ -93,9 +93,10 @@ def main(config: dict = None, config_graphql: dict = None, playlist_ids: list = 
     posts = get_k3_posts(
         k3_endpoint=config['sourceK3Endpoints']['posts'], max_results=max_number)
     # 2. Check post existence
-    for post in posts:
-        post['slug']: f'{config["destSlugPrefix"]}{post["slug"]}'
-    posts_with_new_slug = post
+    posts_with_new_slug = posts
+    for i in range(len(posts_with_new_slug)):
+        posts_with_new_slug[i]['slug'] = f'{config["destSlugPrefix"]}{posts_with_new_slug[i]["slug"]}'
+
     slugs = [post['slug'] for post in posts_with_new_slug]
     existing_slugs_set = find_existing_slugs_set(
         config_graphql=config_graphql, slugs=slugs)
