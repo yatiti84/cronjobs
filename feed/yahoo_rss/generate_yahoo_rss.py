@@ -8,11 +8,13 @@ from google.cloud import storage
 from gql import gql, Client
 from gql.transport.requests import RequestsHTTPTransport
 from json import JSONDecoder
+import __main__
 import argparse
 import gzip
 import hashlib
 import yaml
 
+print(f'[{__main__.__file__}] executing...')
 
 CONFIG_KEY = 'config'
 GRAPHQL_CMS_CONFIG_KEY = 'graphqlCMS'
@@ -152,11 +154,15 @@ def upload_data(bucket_name: str, data: bytes, content_type: str, destination_bl
     bucket = storage_client.bucket(bucket_name)
     blob = bucket.blob(destination_blob_name)
     blob.content_encoding = 'gzip'
+    print(f'[{__main__.__file__}] uploadling data to gs://{bucket_name}{destination_blob_name}')
     blob.upload_from_string(
         data=gzip.compress(data=data, compresslevel=9), content_type=content_type, client=storage_client)
     blob.content_language = 'zh'
     blob.cache_control = 'max-age=300,public'
     blob.patch()
+
+    print(
+        f'[{__main__.__file__}] finished uploading gs://{bucket_name}{destination_blob_name}')
 
 
 # Instantiates a client
@@ -169,6 +175,8 @@ __bucket_name__ = __file_config__['gcsBucket']
 # rss folder path
 __rss_base__ = __file_config__['filePathBase']
 
+print(f'[{__main__.__file__}] generated rss: {fg.rss_str(pretty=False, extensions=True,encoding="UTF-8", xml_declaration=True).decode("UTF-8")}')
+
 upload_data(
     bucket_name=__bucket_name__,
     data=fg.rss_str(pretty=False, extensions=True,
@@ -177,3 +185,5 @@ upload_data(
     destination_blob_name=__rss_base__ +
     f'/{__file_config__["filenamePrefix"]}.{__file_config__["extension"]}'
 )
+
+print(f'[{__main__.__file__}] exiting... goodbye...')
