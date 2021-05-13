@@ -1,15 +1,18 @@
+from datetime import datetime, timedelta
+from dateutil import parser
+from google.cloud import storage
 from gql import gql, Client
 from gql.transport.requests import RequestsHTTPTransport
-
-import sys
-import json
-import time
-import uuid
-import pytz
-import lxml.etree as ET
-import urllib.request
-import unicodedata
+from lxml.etree import CDATA, tostring
 import gzip
+import json
+import lxml.etree as ET
+import pytz
+import sys
+import time
+import unicodedata
+import urllib.request
+import uuid
 
 from dateutil import parser
 from datetime import datetime, timedelta
