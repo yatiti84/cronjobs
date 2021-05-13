@@ -1,20 +1,41 @@
-# Imports the Google Cloud client library
+from datetime import datetime, timedelta, timezone
+from dateutil import parser, tz
+# workaround as feegen raise error: AttributeError: module 'lxml' has no attribute 'etree'
+from lxml import etree
+from feedgen import util
+from feedgen.feed import FeedGenerator
 from google.cloud import storage
 from gql import gql, Client
 from gql.transport.requests import RequestsHTTPTransport
-
-from feedgen.feed import FeedGenerator
-from feedgen import util
-
-from dateutil import parser, tz
-from datetime import datetime, timedelta, timezone
-
-import hashlib
-import gzip
 from json import JSONDecoder
+import argparse
+import gzip
+import hashlib
+import yaml
+
+
+CONFIG_KEY = 'config'
+GRAPHQL_CMS_CONFIG_KEY = 'graphqlCMS'
+NUMBER_KEY = 'number'
+
+yaml_parser = argparse.ArgumentParser(
+    description='Process configuration of generate_google_news_rss')
+yaml_parser.add_argument('-c', '--config', dest=CONFIG_KEY,
+                         help='config file for generate_google_news_rss', metavar='FILE', type=str)
+yaml_parser.add_argument('-g', '--config-graphql', dest=GRAPHQL_CMS_CONFIG_KEY,
+                         help='graphql config file for generate_google_news_rss', metavar='FILE', type=str, required=True)
+yaml_parser.add_argument('-m', '--max-number', dest=NUMBER_KEY,
+                         help='number of feed items', metavar='75', type=int, required=True)
+args = yaml_parser.parse_args()
+
+with open(getattr(args, CONFIG_KEY), 'r') as stream:
+    config = yaml.safe_load(stream)
+with open(getattr(args, GRAPHQL_CMS_CONFIG_KEY), 'r') as stream:
+    config_graphql = yaml.safe_load(stream)
+number = getattr(args, NUMBER_KEY)
 
 __gql_transport__ = RequestsHTTPTransport(
-    url='http://mirror-tv-graphql.default.svc.cluster.local/admin/api',
+    url=config_graphql['apiEndpoint'],
     use_json=True,
     headers={
         'Content-type': 'application/json',
@@ -33,7 +54,7 @@ __seven_days_ago__ = datetime.now(timezone.utc) - timedelta(days=7)
 # To retrieve the latest post published after a specified day
 __qgl_post_template__ = '''
 {
-    allPosts(where: {source: "tv", state: published}, sortBy: publishTime_DESC, first: 75) {
+    allPosts(where: %s, sortBy: publishTime_DESC, first: %d) {
         name
         slug
         briefHtml
@@ -59,35 +80,30 @@ __qgl_post_template__ = '''
 }
 '''
 
-__gql_query__ = gql(__qgl_post_template__)
+__gql_query__ = gql(__qgl_post_template__ %
+                    (config['postWhereFilter'], number))
 __result__ = __gql_client__.execute(__gql_query__)
 
+__config_feed__ = config['feed']
 # the timezone for rss
-__timezone__ = tz.gettz("Asia/Taipei")
+__timezone__ = tz.gettz(__config_feed__['timezone'])
 
 fg = FeedGenerator()
 fg.load_extension('media', atom=False, rss=True)
 fg.load_extension('dc', atom=False, rss=True)
-# TODO
-fg.title('鏡新聞 Yahoo Title')
-# TODO
-fg.description('鏡新聞 Yahoo Description')
-# TODO
-fg.id('https://dev.mnews.tw')
-# TODO
+fg.title(__config_feed__['title'])
+fg.description(__config_feed__['description'])
+fg.id(__config_feed__['id'])
 fg.pubDate(datetime.now(timezone.utc).astimezone(__timezone__))
-# TODO
 fg.updated(datetime.now(timezone.utc).astimezone(__timezone__))
-# TODO
-fg.image(url='https://dev.mnews.tw/logo.png',
-         title='鏡新聞 Yahoo Title', link='https://dev.mnews.tw')
-# TODO
-fg.rights(rights='Copyright 2019-2020')
-fg.link(href='https://dev.mnews.tw', rel='alternate')
-fg.ttl(300)  # 5 minutes
+fg.image(url=__config_feed__['image']['url'],
+         title=__config_feed__['image']['title'], link=__config_feed__['image']['link'])
+fg.rights(rights=__config_feed__['copyright'])
+fg.link(href=__config_feed__['link'], rel='alternate')
+fg.ttl(__config_feed__['ttl'])  # 5 minutes
 fg.language('zh-TW')
 
-__base_url__ = 'https://dev.mnews.tw/story/'
+__base_url__ = config['baseURL']
 
 __json_decoder__ = JSONDecoder()
 
@@ -115,7 +131,7 @@ for item in __result__['allPosts']:
     if item['contentHtml'] is not None:
         content += item['contentHtml']
     if len(item['relatedPosts']) > 0:
-        content += '<br/><p class="read-more-vendor"><span>更多鏡週刊報導</span>'
+        content += __config_feed__['item']['relatedPostPrependHtml']
         for related_post in item['relatedPosts'][:3]:
             content += '<br/><a href="%s">%s</a>' % (
                 __base_url__+related_post['slug'], related_post['name'])
@@ -146,11 +162,12 @@ def upload_data(bucket_name: str, data: bytes, content_type: str, destination_bl
 # Instantiates a client
 __storage_client__ = storage.Client()
 
+__file_config__ = config['file']
 # The name for the new bucket
-__bucket_name__ = 'static-mnews-tw-dev'
+__bucket_name__ = __file_config__['gcsBucket']
 
 # rss folder path
-__rss_base__ = 'rss'
+__rss_base__ = __file_config__['filePathBase']
 
 upload_data(
     bucket_name=__bucket_name__,
@@ -158,5 +175,5 @@ upload_data(
                     encoding='UTF-8', xml_declaration=True),
     content_type='application/rss+xml; charset=utf-8',
     destination_blob_name=__rss_base__ +
-    '/yahoo.xml'
+    f'/{__file_config__["filenamePrefix"]}.{__file_config__["extension"]}'
 )
