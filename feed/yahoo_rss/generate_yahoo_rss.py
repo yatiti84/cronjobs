@@ -36,7 +36,7 @@ __qgl_post_template__ = '''
     allPosts(where: {source: "tv", state: published}, sortBy: publishTime_DESC, first: 75) {
         name
         slug
-        brief
+        briefHtml
         contentHtml
         heroImage {
             urlOriginal
@@ -104,10 +104,9 @@ for item in __result__['allPosts']:
         parser.isoparse(item['updatedAt']).astimezone(__timezone__)))
     content = ''
 
-    if item['brief'] is not None:
-        brief = __json_decoder__.decode(item['brief'])['html']
-        fe.description(description=brief, isSummary=True)
-        content += brief
+    brief = item['briefHtml']
+    fe.description(description=brief, isSummary=True)
+    content += brief
     if item['heroImage'] is not None:
         fe.media.content(
             content={'url': item['heroImage']['urlOriginal'], 'medium': 'image'}, group=None)
