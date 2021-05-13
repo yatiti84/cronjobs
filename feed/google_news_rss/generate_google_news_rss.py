@@ -33,6 +33,8 @@ with open(getattr(args, GRAPHQL_CMS_CONFIG_KEY), 'r') as stream:
     config_graphql = yaml.safe_load(stream)
 number = getattr(args, NUMBER_KEY)
 
+print(f'[{__main__.__file__}] executing...')
+
 __gql_transport__ = RequestsHTTPTransport(
     url=config_graphql['apiEndpoint'],
     use_json=True,
@@ -83,11 +85,18 @@ def upload_data(bucket_name: str, data: bytes, content_type: str, destination_bl
     bucket = storage_client.bucket(bucket_name)
     blob = bucket.blob(destination_blob_name)
     blob.content_encoding = 'gzip'
+
+    print(
+        f'[{__main__.__file__}] uploadling data to gs://{bucket_name}{destination_blob_name}')
+
     blob.upload_from_string(
         data=gzip.compress(data=data, compresslevel=9), content_type=content_type, client=storage_client)
     blob.content_language = 'zh'
     blob.cache_control = 'max-age=300,public'
     blob.patch()
+
+    print(
+        f'[{__main__.__file__}] finished uploading gs://{bucket_name}{destination_blob_name}')
 
 
 __categories__ = config['categories']
@@ -104,6 +113,7 @@ __config_feed__ = config['feed']
 __timezone__ = tz.gettz(__config_feed__['timezone'])
 
 for id, category in __categories__.items():
+    print(f'[{__main__.__file__}] retrieving data for category({category["slug"]})')
     query = gql(__qgl_post_template__ % (id, number))
     result = __gql_client__.execute(query)
 
@@ -135,6 +145,8 @@ for id, category in __categories__.items():
             fe.media.content(
                 content={'url': item['heroImage']['urlOriginal'], 'medium': 'image'}, group=None)
 
+    print(f'[{__main__.__file__}] generated rss for category({category["slug"]}): {fg.rss_str(pretty=False, extensions=True,encoding="UTF-8", xml_declaration=True).decode("UTF-8")}')
+
     upload_data(
         bucket_name=__bucket_name__,
         data=fg.rss_str(pretty=False, extensions=True,
@@ -143,3 +155,6 @@ for id, category in __categories__.items():
         destination_blob_name=__rss_base__ +
         f'/{__file_config__["filenamePrefix"]}_{category["slug"]}.{__file_config__["extension"]}'
     )
+
+
+print(f'[{__main__.__file__}] exiting... goodbye...')
