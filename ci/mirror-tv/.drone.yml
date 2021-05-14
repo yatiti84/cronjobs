@@ -48,6 +48,7 @@ steps:
     pull: if-not-exists
     image: gcr.io/mirror-tv-275709/drone-cloud-sdk:mirror-tv
     commands:
+      - gcloud source repos clone configs ./dockerignore/gcr_configs
       - cp ./dockerignore/gcr_configs/cronjobs/staging/.kube.yml ./.kube.yml
     environment:
       GOOGLE_CREDENTIALS:
