@@ -120,7 +120,6 @@ __default_config = {
         'https://storage.googleapis.com/mirror-tv-file': 'https://dev.mnews.tw',
         'slugBlacklist':
         [
-            'aboutus',
         ],
     }
 }
