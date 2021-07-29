@@ -140,9 +140,13 @@ def main(config: dict = None, configGraphQL: dict = None, playlistIds: list = No
 
         existingVideos = []
         for video in gqlAuthenticatedClient.execute(query)['allVideos']:
-            vqs = parse_qs(urlparse(video['url']).query).get('v','')
+            parsed_url = urlparse(video['url'])
+            vqs = parse_qs(parsed_url.query).get('v','')
+
             if vqs:
                 existingVideos.append(vqs[0])
+            else:
+                existingVideos.append(parsed_url.path.split('/')[1])
 
         for item in items:
             if item['id'] in existingVideos:
