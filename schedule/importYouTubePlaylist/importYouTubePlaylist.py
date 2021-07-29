@@ -150,7 +150,7 @@ def main(config: dict = None, configGraphQL: dict = None, playlistIds: list = No
                 continue
             # print(item)
             # save new video to CMS
-            snippet = item['item']['snippet']
+            snippet = item['snippet']
             brief = convertTextToDraft(config, snippet['description'])
             print(f'convert [{snippet["title"]}] brief to:\n{brief}')
             insertMutationStr = f'''
