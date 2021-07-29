@@ -1,7 +1,7 @@
 from gql import gql, Client
 from gql.transport.requests import RequestsHTTPTransport
 from mergedeep import merge, Strategy
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs
 import argparse
 import json
 import os
@@ -135,11 +135,14 @@ def main(config: dict = None, configGraphQL: dict = None, playlistIds: list = No
 
         # format query array
         queryConditions = ','.join(
-            ['{url_ends_with: ' + '"' + item['id'] + '"}' for item in items])
+            [f'''{{url_ends_with: "{item['id']}"}}''' for item in items])
         query = gql(__queryExistingVideosTemplate % queryConditions)
 
-        existingVideos = [urllib.parse.parse_qs(urlparse(video['url'])[4])['v'][0] for video in gqlAuthenticatedClient.execute(query)[
-            'allVideos']]
+        existingVideos = []
+        for video in gqlAuthenticatedClient.execute(query)['allVideos']:
+            vqs = parse_qs(urlparse(video['url']).query).get('v','')
+            if vqs:
+                existingVideos.append(vqs[0])
 
         for item in items:
             if item['id'] in existingVideos:
@@ -147,7 +150,7 @@ def main(config: dict = None, configGraphQL: dict = None, playlistIds: list = No
                 continue
             # print(item)
             # save new video to CMS
-            snippet = item['item']['snippet']
+            snippet = item['snippet']
             brief = convertTextToDraft(config, snippet['description'])
             print(f'convert [{snippet["title"]}] brief to:\n{brief}')
             insertMutationStr = f'''
