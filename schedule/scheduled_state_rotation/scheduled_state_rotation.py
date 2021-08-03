@@ -13,7 +13,7 @@ For scheduled_editor_choices to run, a CMS bot user is required for it to mutate
 '''
 
 
-def get_updated_state_value(state: str = 'draft') -> str:
+def get_updated_state(state: str = 'draft') -> str:
     states_waterfall = ['scheduled', 'published', 'draft']
 
     # update the state value according to the original state, only scheduled and published will not cause an exception
@@ -24,7 +24,7 @@ def get_updated_state_value(state: str = 'draft') -> str:
         return state
 
 
-def change_editor_choices(config_graphql: dict):
+def create_authenticated_client(config_graphql: dict):
     cms_graphql_endpoint = config_graphql['apiEndpoint']
     gql_transport = RequestsHTTPTransport(
         url=cms_graphql_endpoint,
@@ -71,56 +71,13 @@ def change_editor_choices(config_graphql: dict):
         retries=3,
     )
 
-    gql_authenticated_client = Client(
+    return Client(
         transport=gql_transport_with_token,
         fetch_schema_from_transport=False,
     )
 
-    # To query the EditorChoices in state of published and scheduled, so it can tolling update their state
-    qgl_query_editor_choices_to_modify = '''
-    {
-        allEditorChoices(where: {OR: [{state: published}, {state: scheduled}]}) {
-            id
-            state
-        }
-    }
-    '''
 
-    query = gql(qgl_query_editor_choices_to_modify)
-    editor_choices = gql_authenticated_client.execute(query)[
-        'allEditorChoices']
-
-    if len(editor_choices) == 0:
-        print('There is nothing to be updated. Exit now...')
-        exit(0)
-
-    print(
-        f'These editor choices are about to be updated: {editor_choices}')
-
-    # To update EditorChoices, data should be an array of objects containing id and data
-
-    new_data_list = ['{id: "%s", data:{state: %s}}' % (
-        editor_choice["id"], get_updated_state_value(editor_choice["state"])) for editor_choice in editor_choices]
-    new_data_str = '[' + ','.join(new_data_list) + ']'
-
-    print(
-        f'The editor choices is going to be updated as: {new_data_str}')
-
-    qgl_mutate_editor_choices_template = '''
-    mutation {
-        updateEditorChoices(data: %s) {
-            id
-            state
-        }
-    }
-    '''
-
-    mutation = gql(qgl_mutate_editor_choices_template % new_data_str)
-    updateEditorChoices = gql_authenticated_client.execute(mutation)
-
-    print(f'EditorChoices are updated as:{updateEditorChoices}')
-
-    # Unauthenticate user after finishing updating to protect the user. Cronjobs' unauthentication shouldn't interfere each other.
+def unauthenticate_graphql_user(gql_authenticated_client: Client, username: str):
     qgl_mutate_unauthenticate_user = '''
     mutation {
         unauthenticate: unauthenticateUser {
@@ -139,17 +96,91 @@ def change_editor_choices(config_graphql: dict):
         print(f'{username} failed to unauthenticate')
 
 
+def update_multiple_states(client: Client, mutation_name: str, content: list):
+
+    new_data_list = ['{id: "%s", data:{state: %s}}' % (
+        data["id"], get_updated_state(data["state"])) for data in content]
+    new_data_str = '[' + ','.join(new_data_list) + ']'
+
+    print(f'{mutation_name} is going to update: {new_data_str}')
+
+    qgl_mutate_editor_choices_template = '''
+        mutation {
+            %s(data: %s) {
+                id
+                state
+            }
+        }
+    '''
+
+    mutation = gql(
+        qgl_mutate_editor_choices_template % (mutation_name, new_data_str)
+    )
+
+    updatedData = client.execute(mutation)
+
+    print(f'{mutation_name} updated:{updatedData}')
+
+    return updatedData
+
+
+def rotate_and_update_states(client: Client):
+
+    where_condition = '{OR: [{state: published}, {state: scheduled}]}'
+
+    qgl_query_content_to_modify = '''
+    {
+        allEditorChoices(where: %s) {
+            state
+            id
+        }
+        allVideoEditorChoices(where: %s) {
+            state
+            id
+        }
+        allPromotionVideos(where: %s) {
+            state
+            id
+        }
+    }
+    ''' % (where_condition, where_condition, where_condition)
+
+    content = client.execute(gql(qgl_query_content_to_modify))
+
+    editor_choices = content['allEditorChoices']
+    if len(editor_choices) != 0:
+        update_multiple_states(client, 'updateEditorChoices', editor_choices)
+    else:
+        print('There is nothing to be updated for EditorChoice')
+
+    video_editor_choices = content['allVideoEditorChoices']
+    if len(video_editor_choices) != 0:
+        update_multiple_states(
+            client, 'updateVideoEditorChoices', video_editor_choices)
+    else:
+        print('There is nothing to be updated for VideoEditorChoice')
+
+    promotion_videos = content['allPromotionVideos']
+    if len(promotion_videos) != 0:
+        update_multiple_states(
+            client, 'updatePromotionVideos', promotion_videos)
+    else:
+        print('There is nothing to be updated for PromotionVideo')
+
+
 __GRAPHQL_CMS_CONFIG_KEY = 'graphqlCMS'
 
 
 def main(config_graphql: dict = None):
-    ''' Import YouTube Channel program starts here '''
     logger = logging.getLogger(__main__.__file__)
     logger.setLevel('INFO')
 
-    change_editor_choices(config_graphql)
+    authenticated_gql_client = create_authenticated_client(config_graphql)
 
-    # 3. Generate and clean up Posts for k5
+    rotate_and_update_states(authenticated_gql_client)
+
+    unauthenticate_graphql_user(
+        authenticated_gql_client, config_graphql['username'])
 
 
 logging.basicConfig()
