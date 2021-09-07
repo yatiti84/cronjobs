@@ -161,6 +161,7 @@ for id, category in __categories__.items():
     fg.ttl(__config_feed__['ttl'])  # 5 minutes
     fg.language('zh-TW')
 
+    print('total rows: ' + str(len(result['allPosts'])))
     for item in result['allPosts']:
         fe = fg.add_entry(order='append')
         fe.id(__base_url__+item['slug'])
