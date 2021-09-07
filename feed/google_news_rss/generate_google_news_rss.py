@@ -170,8 +170,30 @@ for id, category in __categories__.items():
         fe.guid(__base_url__ + item['slug'])
         fe.pubDate(util.formatRFC2822(
             parser.isoparse(item['publishTime']).astimezone(__timezone__)))
+
+        content = ''
+        brief = item['briefHtml']
+        if brief is not None:
+            fe.description(description=brief, isSummary=True)
+            content += brief
+        if item['heroImage'] is not None:
+            fe.media.content(
+                content={'url': item['heroImage']['urlOriginal'], 'medium': 'image'}, group=None)
+            content += '<img src="%s" alt="%s" />' % (
+                item['heroImage']['urlOriginal'], item['heroImage']['name'])
+        if item['contentHtml'] is not None:
+            content += item['contentHtml']
+        if len(item['relatedPosts']) > 0:
+            content += __config_feed__['item']['relatedPostPrependHtml']
+            for related_post in item['relatedPosts'][:3]:
+                content += '<br/><a href="%s">%s</a>' % (
+                    __base_url__+related_post['slug'], related_post['name'])
+        fe.content_encoded(content=content, type='CDATA')
         fe.updated(util.formatRFC2822(
             parser.isoparse(item['updatedAt'])))
+        if item['writers'] is not None:
+            fe.dc.dc_creator(creator=list(
+                map(lambda w: w['name'], item['writers'])))
         if item['heroImage'] is not None:
             fe.media.content(
                 content={'url': item['heroImage']['urlOriginal'], 'medium': 'image'}, group=None)
