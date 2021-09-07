@@ -85,12 +85,17 @@ __qgl_post_template__ = '''
     allPosts(where: {%s, categories_some: {id: %d}, state: published}, sortBy: publishTime_DESC, first: %d) {
         name
         slug
+        briefHtml
+        contentHtml
         heroImage {
             urlOriginal
         }
         categories {
             name
             slug
+        }
+        writers {
+            name
         }
         publishTime
         updatedAt
