@@ -195,7 +195,7 @@ for id, category in __categories__.items():
         if item['contentHtml'] is not None:
             content += item['contentHtml']
         if len(item['relatedPosts']) > 0:
-            content += __config_feed__['item']['relatedPostPrependHtml']
+            #content += __config_feed__['item']['relatedPostPrependHtml']
             for related_post in item['relatedPosts'][:3]:
                 content += '<br/><a href="%s">%s</a>' % (
                     __base_url__+related_post['slug'], related_post['name'])
