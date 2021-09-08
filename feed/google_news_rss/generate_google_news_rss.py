@@ -159,6 +159,7 @@ for id, category in __categories__.items():
 
     fg = FeedGenerator()
     fg.load_extension('media', atom=False, rss=True)
+    fg.load_extension('dc', atom=False, rss=True)
     fg.title(__config_feed__['title'])
     fg.description(__config_feed__['description'])
     fg.id(__config_feed__['id'])
