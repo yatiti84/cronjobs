@@ -95,6 +95,10 @@ __qgl_post_template__ = '''
             name
             slug
         }
+        relatedPosts {
+            name
+            slug
+        }
         writers {
             name
         }
