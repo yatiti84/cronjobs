@@ -89,6 +89,7 @@ __qgl_post_template__ = '''
         contentHtml
         heroImage {
             urlOriginal
+            name
         }
         categories {
             name
