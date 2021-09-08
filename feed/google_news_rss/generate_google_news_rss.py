@@ -198,7 +198,7 @@ for id, category in __categories__.items():
             for related_post in item['relatedPosts'][:3]:
                 content += '<br/><a href="%s">%s</a>' % (
                     __base_url__+related_post['slug'], related_post['name'])
-        fe.content_encoded(content=content, type='CDATA')
+        fe.content(content=content, type='CDATA')
         fe.updated(util.formatRFC2822(
             parser.isoparse(item['updatedAt'])))
         if item['writers'] is not None:
