@@ -85,12 +85,22 @@ __qgl_post_template__ = '''
     allPosts(where: {%s, categories_some: {id: %d}, state: published}, sortBy: publishTime_DESC, first: %d) {
         name
         slug
+        briefHtml
+        contentHtml
         heroImage {
             urlOriginal
+            name
         }
         categories {
             name
             slug
+        }
+        relatedPosts {
+            name
+            slug
+        }
+        writers {
+            name
         }
         publishTime
         updatedAt
@@ -149,6 +159,7 @@ for id, category in __categories__.items():
 
     fg = FeedGenerator()
     fg.load_extension('media', atom=False, rss=True)
+    fg.load_extension('dc', atom=False, rss=True)
     fg.title(__config_feed__['title'])
     fg.description(__config_feed__['description'])
     fg.id(__config_feed__['id'])
@@ -161,25 +172,48 @@ for id, category in __categories__.items():
     fg.ttl(__config_feed__['ttl'])  # 5 minutes
     fg.language('zh-TW')
 
+    print('total rows: ' + str(len(result['allPosts'])))
     for item in result['allPosts']:
         fe = fg.add_entry(order='append')
         fe.id(__base_url__+item['slug'])
-        fe.title(item['name'])
+        fe.title(content=item['name'], type='CDATA')
         fe.link(href=__base_url__+item['slug'], rel='alternate')
         fe.guid(__base_url__ + item['slug'])
         fe.pubDate(util.formatRFC2822(
             parser.isoparse(item['publishTime']).astimezone(__timezone__)))
+
+        content = ''
+        brief = item['briefHtml']
+        if brief is not None:
+            fe.description(description=brief, isSummary=True)
+            content += brief
+        if item['heroImage'] is not None:
+            fe.media.content(
+                content={'url': item['heroImage']['urlOriginal'], 'medium': 'image'}, group=None)
+            content += '<img src="%s" alt="%s" />' % (
+                item['heroImage']['urlOriginal'], item['heroImage']['name'])
+        if item['contentHtml'] is not None:
+            content += item['contentHtml']
+        if len(item['relatedPosts']) > 0:
+            #content += __config_feed__['item']['relatedPostPrependHtml']
+            for related_post in item['relatedPosts'][:3]:
+                content += '<br/><a href="%s">%s</a>' % (
+                    __base_url__+related_post['slug'], related_post['name'])
+        fe.content(content=content, type='CDATA')
         fe.updated(util.formatRFC2822(
             parser.isoparse(item['updatedAt'])))
+        if item['writers'] is not None:
+            fe.dc.dc_creator(creator=list(
+                map(lambda w: w['name'], item['writers'])))
         if item['heroImage'] is not None:
             fe.media.content(
                 content={'url': item['heroImage']['urlOriginal'], 'medium': 'image'}, group=None)
 
-    print(f'[{__main__.__file__}] generated rss for category({category["slug"]}): {fg.rss_str(pretty=False, extensions=True,encoding="UTF-8", xml_declaration=True).decode("UTF-8")}')
+    print(f'[{__main__.__file__}] generated rss for category({category["slug"]}): {fg.rss_str(pretty=True, extensions=True,encoding="UTF-8", xml_declaration=True).decode("UTF-8")}')
 
     upload_data(
         bucket_name=__bucket_name__,
-        data=fg.rss_str(pretty=False, extensions=True,
+        data=fg.rss_str(pretty=True, extensions=True,
                         encoding='UTF-8', xml_declaration=True),
         content_type='application/rss+xml; charset=utf-8',
         destination_blob_name=__rss_base__ +
