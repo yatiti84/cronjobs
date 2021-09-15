@@ -80,7 +80,6 @@ def main(config_graphql: dict = None):
 
     resp = gql_authenticated_client.execute(
         gql(query_scheduled_posts))
-    logger.info(resp)
     all_posts = resp['allPosts']
     all_art_shows = resp['allArtShows']
 
@@ -90,7 +89,7 @@ def main(config_graphql: dict = None):
     art_show_data = ['{id: %s, data:{state: published, publishTime: "%s"}}' % (art_show['id'], now)
                      for art_show in all_art_shows]
 
-    if len(post_data) != 0:
+    if len(post_data) != 0 and len(art_show_data) != 0:
         publish_mutation = '''
         mutation {
             updatePosts(data: [%s]){
