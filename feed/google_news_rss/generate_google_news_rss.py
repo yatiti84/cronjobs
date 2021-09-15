@@ -176,7 +176,7 @@ for id, category in __categories__.items():
     for item in result['allPosts']:
         fe = fg.add_entry(order='append')
         fe.id(__base_url__+item['slug'])
-        fe.title(content=item['name'], type='CDATA')
+        fe.title(title=item['name'], type='CDATA')
         fe.link(href=__base_url__+item['slug'], rel='alternate')
         fe.guid(__base_url__ + item['slug'])
         fe.pubDate(util.formatRFC2822(
