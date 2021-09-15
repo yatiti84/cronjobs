@@ -80,6 +80,7 @@ def main(config_graphql: dict = None):
 
     resp = gql_authenticated_client.execute(
         gql(query_scheduled_posts))
+    logger.info(resp)
     all_posts = resp['allPosts']
     all_art_shows = resp['allArtShows']
 
