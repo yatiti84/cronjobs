@@ -82,7 +82,7 @@ __gql_client__ = create_authenticated_k5_client(config_graphql)
 # To retrieve the latest 25 published posts for the specified category
 __qgl_post_template__ = '''
 {
-    allPosts(where: {%s, categories_some: {id: %d}, state: published}, sortBy: publishTime_DESC, first: %d) {
+    allPosts(where: {%s, categories_some: {slug: "%s"}, state: published}, sortBy: publishTime_DESC, first: %d) {
         name
         slug
         briefHtml
@@ -154,7 +154,7 @@ __timezone__ = tz.gettz(__config_feed__['timezone'])
 for id, category in __categories__.items():
     print(f'[{__main__.__file__}] retrieving data for category({category["slug"]})')
     query = gql(__qgl_post_template__ %
-                (config['postWhereSourceFilter'], id, number))
+                (config['postWhereSourceFilter'], category["slug"], number))
     result = __gql_client__.execute(query)
 
     fg = FeedGenerator()
