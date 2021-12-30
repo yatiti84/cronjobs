@@ -244,7 +244,6 @@ def insert_post_to_k5(authenticated_graphql_client: Client, post: dict, source: 
         mutation {{
             createPost(data: {{
                 slug: {post["slugJsonStr"]},
-                state: draft,
                 name: {post["nameJsonStr"]},
                 writers: {{
                     connect:{{
