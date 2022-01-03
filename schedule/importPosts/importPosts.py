@@ -127,7 +127,7 @@ def convert_and_clean_post_for_k5(posts: list, delegated_writer: int) -> list:
 
 def is_category_not_member_only(category: dict) -> bool:
     # is_member_only mey not be presented. In such case, we treat it as False.
-    return category.get('is_member_only') in (None, False)
+    return category.get('isMemberOnly') in (None, False)
 
 
 def is_section_allowed(section_name_blacklist: list, section: dict) -> bool:
