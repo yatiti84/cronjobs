@@ -14,6 +14,7 @@ import gzip
 import hashlib
 import logging
 import yaml
+import re
 
 
 def create_authenticated_k5_client(config_graphql: dict) -> Client:
@@ -167,6 +168,7 @@ for item in __result__['allPosts']:
         for related_post in item['relatedPosts'][:3]:
             content += '<br/><a href="%s">%s</a>' % (
                 __base_url__+related_post['slug'], related_post['name'])
+    content = re.sub(u'[^\u0020-\uD7FF\u0009\u000A\u000D\uE000-\uFFFD\U00010000-\U0010FFFF]+', '', content)
     fe.content(content=content, type='CDATA')
     fe.category(
         list(map(lambda c: {'term': c['name'], 'label': c['name']}, item['categories'])))
