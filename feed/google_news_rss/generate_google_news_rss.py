@@ -176,7 +176,7 @@ for id, category in __categories__.items():
     for item in result['allPosts']:
         fe = fg.add_entry(order='append')
         fe.id(__base_url__+item['slug'])
-        fe.title(item['name'])
+        fe.title(item['name'].decode('UTF-8'))
         fe.link(href=__base_url__+item['slug'], rel='alternate')
         fe.guid(__base_url__ + item['slug'])
         fe.pubDate(util.formatRFC2822(
@@ -199,7 +199,7 @@ for id, category in __categories__.items():
             for related_post in item['relatedPosts'][:3]:
                 content += '<br/><a href="%s">%s</a>' % (
                     __base_url__+related_post['slug'], related_post['name'])
-        fe.content(content=content, type='CDATA')
+        fe.content(content=content.decode('UTF-8'), type='CDATA')
         fe.updated(util.formatRFC2822(
             parser.isoparse(item['updatedAt'])))
         if item['writers'] is not None:
