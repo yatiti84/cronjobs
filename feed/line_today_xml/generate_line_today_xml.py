@@ -17,6 +17,7 @@ import unicodedata
 import urllib.request
 import uuid
 import yaml
+import re
 
 print(f'[{__main__.__file__}] executing...')
 
@@ -190,7 +191,7 @@ if __name__ == '__main__':
     for article in articles:
         availableDate = max(tsConverter(
             article['publishTime']), tsConverter(article['updatedAt']))
-
+        content = re.sub(u'[^\u0020-\uD7FF\u0009\u000A\u000D\uE000-\uFFFD\U00010000-\U0010FFFF]+', '', item['contentHtml'])
         item = {
             'ID': article['id'],
             'nativeCountry': 'TW',
@@ -203,7 +204,7 @@ if __name__ == '__main__':
             'contentType': 0,
             'contents': {
                 'text': {
-                        'content': article['contentHtml']
+                        'content': content
                 },
             },
             'recommendArticles': {
