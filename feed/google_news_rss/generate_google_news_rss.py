@@ -12,6 +12,7 @@ import argparse
 import gzip
 import logging
 import yaml
+import re
 
 CONFIG_KEY = 'config'
 GRAPHQL_CMS_CONFIG_KEY = 'graphqlCMS'
@@ -176,6 +177,7 @@ for id, category in __categories__.items():
     for item in result['allPosts']:
         fe = fg.add_entry(order='append')
         fe.id(__base_url__+item['slug'])
+        re.sub(u'[^\u0020-\uD7FF\u0009\u000A\u000D\uE000-\uFFFD\U00010000-\U0010FFFF]+', '', item['name'])
         fe.title(item['name'])
         fe.link(href=__base_url__+item['slug'], rel='alternate')
         fe.guid(__base_url__ + item['slug'])
@@ -184,6 +186,7 @@ for id, category in __categories__.items():
 
         content = ''
         brief = item['briefHtml']
+        re.sub(u'[^\u0020-\uD7FF\u0009\u000A\u000D\uE000-\uFFFD\U00010000-\U0010FFFF]+', '', brief)
         if brief is not None:
             fe.description(description=brief, isSummary=True)
             content += brief
@@ -199,6 +202,7 @@ for id, category in __categories__.items():
             for related_post in item['relatedPosts'][:3]:
                 content += '<br/><a href="%s">%s</a>' % (
                     __base_url__+related_post['slug'], related_post['name'])
+        re.sub(u'[^\u0020-\uD7FF\u0009\u000A\u000D\uE000-\uFFFD\U00010000-\U0010FFFF]+', '', content)
         fe.content(content=content, type='CDATA')
         fe.updated(util.formatRFC2822(
             parser.isoparse(item['updatedAt'])))
