@@ -209,8 +209,6 @@ for id, category in __categories__.items():
             fe.media.content(
                 content={'url': item['heroImage']['urlOriginal'], 'medium': 'image'}, group=None)
 
-    print(f'[{__main__.__file__}] generated rss for category({category["slug"]}): {fg.rss_str(pretty=True, extensions=True,encoding="UTF-8", xml_declaration=True).decode("UTF-8")}')
-
     upload_data(
         bucket_name=__bucket_name__,
         data=fg.rss_str(pretty=True, extensions=True,
