@@ -162,7 +162,7 @@ xmlns:content="http://purl.org/rss/1.0/modules/content/">
   </channel>
 </rss>
     """
-    upload_data(bucket_name=bucket_name, data=rss_string, content_type='application/rss+xml',
+    upload_data(bucket_name=bucket_name, data=rss_string, content_type='application/xml',
         destination_blob_name=rss_base +'facebook_ia_rss.xml')
 
 if __name__ == '__main__':
