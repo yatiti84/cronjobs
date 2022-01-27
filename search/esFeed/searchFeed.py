@@ -158,7 +158,7 @@ def getPostsUpdatedBetween(client: Client, startDt, endDt=None):
                 contentHtml
                 topics {
                     name
-                    subtitle
+                    brief
                 }
                 tags {
                     name
