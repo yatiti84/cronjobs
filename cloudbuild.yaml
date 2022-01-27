@@ -44,6 +44,14 @@ steps:
 
         do
 
+        # set the image
+        cron="cronjobs-tv-"${kr/*\//}
+
+        # update docker image
+
+        /workspace/kustomize edit set image
+        ${cron}=gcr.io/${PROJECT_ID}/cronjobs:${BRANCH_NAME}_${SHORT_SHA}
+
         # generate kubernetes configs from each kustimization root
 
         /workspace/kustomize build "$kr" >> $_FILE_TO_DEPLOY
