@@ -13,7 +13,13 @@ steps:
       - push
       - >-
         gcr.io/${PROJECT_ID}/${REPO_NAME}:${BRANCH_NAME}_${SHORT_SHA}_${BUILD_ID}
-steps:
+  - name: gcr.io/cloud-builders/gcloud
+    args:
+      - source
+      - repos
+      - clone
+      - github_mirror-media_kubernetes-configs
+      - ./dockerignore/kubernetes-configs
   - name: launcher.gcr.io/google/ubuntu1604
     args:
       - '-c'
@@ -24,6 +30,10 @@ steps:
         "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"
         | bash
 
+
+        # mv kubernetes-configs folder
+
+        mv ./dockerignore/kubernetes-configs /workspace/kubernetes-configs
 
         # read kustimization roots from substitution variable
 
