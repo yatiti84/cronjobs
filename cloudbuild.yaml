@@ -33,7 +33,7 @@ steps:
 
         # mv kubernetes-configs folder
 
-        mv ./dockerignore/kubernetes-configs /workspace/kubernetes-configs
+        mv ./dockerignore/kubernetes-configs/cronjobs /workspace/cronjobs
 
         # read kustimization roots from substitution variable
 
