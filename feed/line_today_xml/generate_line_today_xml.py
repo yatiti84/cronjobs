@@ -192,13 +192,14 @@ if __name__ == '__main__':
         availableDate = max(tsConverter(
             article['publishTime']), tsConverter(article['updatedAt']))
         content = re.sub(u'[^\u0020-\uD7FF\u0009\u000A\u000D\uE000-\uFFFD\U00010000-\U0010FFFF]+', '', item['contentHtml'])
+        title = re.sub(u'[^\u0020-\uD7FF\u0009\u000A\u000D\uE000-\uFFFD\U00010000-\U0010FFFF]+', '', article['name'])
         item = {
             'ID': article['id'],
             'nativeCountry': 'TW',
             'language': 'zh',
             'startYmdtUnix': availableDate,
             'endYmdtUnix': tsConverter(article['publishTime']) + (round(timedelta(news_available_days, 0).total_seconds()) * 1000),
-            'title': article['name'],
+            'title': title,
             'category': article['categories'][0]['name'] if len(article['categories']) > 0 else [],
             'publishTimeUnix': availableDate,
             'contentType': 0,
