@@ -143,7 +143,8 @@ for item in __result__['allPosts']:
     guid = hashlib.sha224((__base_url__+item['slug']).encode()).hexdigest()
     fe = fg.add_entry(order='append')
     fe.id(guid)
-    fe.title(item['name'])
+    name = re.sub(u'[^\u0020-\uD7FF\u0009\u000A\u000D\uE000-\uFFFD\U00010000-\U0010FFFF]+', '', item['name'])
+    fe.title(name)
     fe.link(href=__base_url__+item['slug'], rel='alternate')
     fe.guid(guid)
     fe.pubDate(util.formatRFC2822(
@@ -154,6 +155,7 @@ for item in __result__['allPosts']:
 
     brief = item['briefHtml']
     if brief is not None:
+        brief = re.sub(u'[^\u0020-\uD7FF\u0009\u000A\u000D\uE000-\uFFFD\U00010000-\U0010FFFF]+', '', brief)
         fe.description(description=brief, isSummary=True)
         content += brief
     if item['heroImage'] is not None:
