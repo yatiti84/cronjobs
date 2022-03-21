@@ -13,12 +13,12 @@ NUMBER_KEY = 'number'
 
 yaml_parser = argparse.ArgumentParser(
     description='Process configuration of mnews_sitemap_xml')
-yaml_parser.add_argument('-c', '--config', dest=CONFIG_KEY,
-                         help='config file for mnews_sitemap_xml', metavar='FILE', type=str)
-yaml_parser.add_argument('-g', '--config-graphql', dest=GRAPHQL_CMS_CONFIG_KEY,
-                         help='graphql config file for mnews_sitemap_xml', metavar='FILE', type=str, required=True)
-yaml_parser.add_argument('-m', '--max-number', dest=NUMBER_KEY,
-                         help='number of feed items', metavar='75', type=int, required=True)
+yaml_parser.add_argument('-c', '--config', dest = CONFIG_KEY,
+                         help = 'config file for mnews_sitemap_xml', metavar = 'FILE', type=str)
+yaml_parser.add_argument('-g', '--config-graphql', dest = GRAPHQL_CMS_CONFIG_KEY,
+                         help = 'graphql config file for mnews_sitemap_xml', metavar = 'FILE', type = str, required = True)
+yaml_parser.add_argument('-m', '--max-number', dest = NUMBER_KEY,
+                         help = 'number of feed items', metavar = '75', type = int, required = True)
 args = yaml_parser.parse_args()
 
 with open(getattr(args, CONFIG_KEY), 'r') as stream:
@@ -42,9 +42,9 @@ def create_authenticated_k5_client(config_graphql: dict) -> Client:
     # Authenticate through GraphQL
 
     gql_endpoint = config_graphql['apiEndpoint']
-    gql_transport = AIOHTTPTransport(url=gql_endpoint)
-    gql_client = Client(transport=gql_transport,
-                        fetch_schema_from_transport=False)
+    gql_transport = AIOHTTPTransport(url = gql_endpoint)
+    gql_client = Client(transport = gql_transport,
+                        fetch_schema_from_transport = False)
     qgl_mutation_authenticate_get_token = '''
     mutation{
       authenticateUserWithPassword(email:"%s", password: "%s"){
@@ -59,17 +59,17 @@ def create_authenticated_k5_client(config_graphql: dict) -> Client:
         'authenticateUserWithPassword']['token']
 
     gql_transport_with_token = AIOHTTPTransport(
-        url=gql_endpoint,
-        headers={
+        url = gql_endpoint,
+        headers = {
             'Authorization': f'Bearer {token}'
         },
-        timeout=60
+        timeout = 60
     )
 
     return Client(
-        transport=gql_transport_with_token,
-        execute_timeout=60,
-        fetch_schema_from_transport=False,
+        transport = gql_transport_with_token,
+        execute_timeout = 60,
+        fetch_schema_from_transport = False,
     )
 
 def query_show_slug(endpoints, gql_client):
