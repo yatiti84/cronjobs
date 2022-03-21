@@ -34,11 +34,11 @@ __file_config__ = config['file']
 __bucket_name__ = __file_config__['bucket_name']
 __destination_prefix__ = __file_config__['destination_prefix']
 __template__ = config['template']
-
+__src_file_name__ = config['src_file_name']
 
 def create_authenticated_k5_client(config_graphql: dict) -> Client:
-    # logger = logging.getLogger(__main__.__file__)
-    # logger.setLevel('INFO')
+    logger = logging.getLogger(__main__.__file__)
+    logger.setLevel('INFO')
     # Authenticate through GraphQL
 
     gql_endpoint = config_graphql['apiEndpoint']
@@ -57,7 +57,6 @@ def create_authenticated_k5_client(config_graphql: dict) -> Client:
 
     token = gql_client.execute(gql(mutation))[
         'authenticateUserWithPassword']['token']
-    print(token)
 
     gql_transport_with_token = AIOHTTPTransport(
         url=gql_endpoint,
@@ -73,7 +72,15 @@ def create_authenticated_k5_client(config_graphql: dict) -> Client:
         fetch_schema_from_transport=False,
     )
 
-
+def query_gql(gql_client, query):
+    query = gql(query)
+    try:
+        result = gql_client.execute(query)
+    except Exception as e:
+        print(e)
+        return
+    else:
+        return result
 def query_show_slug(endpoints, gql_client):
     query_show = '''
     query{
@@ -82,13 +89,15 @@ def query_show_slug(endpoints, gql_client):
   }
 }
     '''
-    query = gql(query_show)
-    allShows = gql_client.execute(query)
-    for item in allShows['allShows']:
-        slug = item['slug']
-        show = '/show/' + slug
-        endpoints.append(show)
-
+    allShows = query_gql(gql_client, query_show)
+    allShows = allShows['allShows']
+    if allShows:
+        for item in allShows:
+            slug = item['slug']
+            show = '/show/' + slug
+            endpoints.append(show)
+    else:
+        print("no show")
 
 def query_cate_slug(endpoints, gql_client):
     categories = []
@@ -99,25 +108,27 @@ def query_cate_slug(endpoints, gql_client):
   }
 }
 '''
-    query = gql(query_cate)
-    allCategories = gql_client.execute(query)
-    for item in allCategories['allCategories']:
-        slug = item['slug']
-        categories.append(slug)
-        if slug == 'ombuds':
-            endpoints.append('/ombuds')
-            continue
-        if slug == 'stream':
-            slug = 'video'
-        cate = '/category/' + slug
-        endpoints.append(cate)
-    print(endpoints)
-    return categories
+    allCategories = query_gql(gql_client, query_cate)
+    allCategories = allCategories['allCategories']
+    if allCategories: 
+        for item in allCategories:
+            slug = item['slug']
+            categories.append(slug)
+            if slug == 'ombuds':
+                endpoints.append('/ombuds')
+                continue
+            if slug == 'stream':
+                slug = 'video'
+            cate = '/category/' + slug
+            endpoints.append(cate)
+    else:
+        print("no cate")
+    return categories 
 
 
-def querty_leatest_slug(endpoints, gql_client):
+def querty_latest_slug(endpoints, gql_client):
 
-    query_leatest = '''
+    query_latest = '''
     query{
     allPosts(where:{
       state:published}, sortBy:publishTime_DESC, first:120){
@@ -125,16 +136,18 @@ def querty_leatest_slug(endpoints, gql_client):
 
     }
   }'''
-    query = gql(query_leatest)
-    allPosts = gql_client.execute(query)
-    for item in allPosts['allPosts']:
-        slug = item['slug']
-        post = '/story/' + slug
-        endpoints.append(post)
+    allPosts = query_gql(gql_client, query_latest)
+    allPosts = allPosts['allPosts']
+    if allPosts:
+        for item in allPosts:
+            slug = item['slug']
+            post = '/story/' + slug
+            endpoints.append(post)
+    else:
+        print("no latest post")
 
 
 def query_post_slug(cate, gql_client):
-    print(cate)
     post_endpoint = []
     query_post = '''query{
     allPosts(where:{state:published, categories_some:{slug:"%s"}
@@ -142,14 +155,16 @@ def query_post_slug(cate, gql_client):
     slug
     }
 }''' % cate
-    query = gql(query_post)
-    print(query_post)
-    allPosts = gql_client.execute(query)
-    for item in allPosts['allPosts']:
-        slug = item['slug']
-        post = '/story/' + slug
-        post_endpoint.append(post)
+    allPosts = query_gql(gql_client, query_post)
+    allPosts = allPosts['allPosts']
+    if allPosts:
+        for item in allPosts:
+            slug = item['slug']
+            post = '/story/' + slug
+            post_endpoint.append(post)
     return post_endpoint
+    
+    
 
 
 def generate_sitemap_xml(endpoint_slug):
@@ -159,7 +174,6 @@ def generate_sitemap_xml(endpoint_slug):
     sitemap += sitemap_template['header']
     for slug in endpoint_slug:
         loc = __base_url__ + slug
-        #print(__base_url__ + slug)
         if slug == '/':
             priority = 1.0
         else:
@@ -167,7 +181,6 @@ def generate_sitemap_xml(endpoint_slug):
         url_tag = sitemap_template['urltag'].format(loc, lastmod, priority)
         sitemap += url_tag
     sitemap += sitemap_template['endtag']
-    print(sitemap)
     return sitemap
 
 
@@ -197,11 +210,10 @@ def sitemap():
     hp_endpoint_slug = config['configs_endpoint']
     categories = query_cate_slug(hp_endpoint_slug, gql_client)
     query_show_slug(hp_endpoint_slug, gql_client)
-    querty_leatest_slug(hp_endpoint_slug, gql_client)
+    querty_latest_slug(hp_endpoint_slug, gql_client)
     homepage_sitemap = generate_sitemap_xml(hp_endpoint_slug)
-    print(homepage_sitemap)
     # store and upload homepage sitemap
-    source_file_name = 'sitemap_homepage.xml'
+    source_file_name = __src_file_name__['homepage']
     destination_blob_name = __destination_prefix__ + source_file_name
     with open(source_file_name, 'w', encoding='utf8') as f:
         f.write(homepage_sitemap)
@@ -210,18 +222,25 @@ def sitemap():
     sitemap_index_url.append('/' + destination_blob_name)
 
     # made category sitemap
-    for cate in categories:
-        if cate != 'stream':
+    if categories:
+        for cate in categories:
+            if cate == 'stream':
+                continue
             post_endpoint_slug = query_post_slug(cate, gql_client)
-            # print(post_endpoint)
-            post_sitemap = generate_sitemap_xml(post_endpoint_slug)
-            source_file_name = 'sitemap_{}.xml'.format(cate)
+            if post_endpoint_slug:
+                post_sitemap = generate_sitemap_xml(post_endpoint_slug)     
+            else:
+                    print("no post")
+                    continue
+            source_file_name = __src_file_name__['cate_post'].format(cate)
             destination_blob_name = __destination_prefix__ + source_file_name
             with open(source_file_name, 'w', encoding='utf8') as f:
                 f.write(post_sitemap)
             upload_blob(__bucket_name__, source_file_name,
                         destination_blob_name)
             sitemap_index_url.append('/' + destination_blob_name)
+    else:
+        print('no categories')
     return sitemap_index_url
 
 
@@ -232,20 +251,18 @@ def generate_sitemap_index_xml(sitemap_index_url):
     index_sitemap += sitemap_index_template['header']
     for slug in sitemap_index_url:
         loc = __base_url__ + slug
-        #print(__base_url__ + slug)
         sitemap_tag = sitemap_index_template['urltag'].format(loc, lastmod)
 
         index_sitemap += sitemap_tag
 
     index_sitemap += sitemap_index_template['endtag']
-    print(index_sitemap)
+
     return index_sitemap
 
 
 sitemap_index_url = sitemap()
-print(sitemap_index_url)
 index_sitemap = generate_sitemap_index_xml(sitemap_index_url)
-source_file_name = 'sitemap_index.xml'
+source_file_name = __src_file_name__['sitemap_index']
 destination_blob_name = __destination_prefix__ + source_file_name
 with open(source_file_name, 'w', encoding='utf8') as f:
     f.write(index_sitemap)
