@@ -34,7 +34,7 @@ __file_config__ = config['file']
 __bucket_name__ = __file_config__['bucket_name']
 __destination_prefix__ = __file_config__['destination_prefix']
 __template__ = config['template']
-__src_file_name__ = config['src_file_name']
+__src_file_name__ = __file_config__['src_file_name']
 
 def create_authenticated_k5_client(config_graphql: dict) -> Client:
     logger = logging.getLogger(__main__.__file__)
