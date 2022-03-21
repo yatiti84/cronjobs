@@ -72,15 +72,6 @@ def create_authenticated_k5_client(config_graphql: dict) -> Client:
         fetch_schema_from_transport=False,
     )
 
-def query_gql(gql_client, query):
-    query = gql(query)
-    try:
-        result = gql_client.execute(query)
-    except Exception as e:
-        print(e)
-        return
-    else:
-        return result
 def query_show_slug(endpoints, gql_client):
     query_show = '''
     query{
@@ -89,11 +80,11 @@ def query_show_slug(endpoints, gql_client):
   }
 }
     '''
-    allShows = query_gql(gql_client, query_show)
-    
-    if 'allShows' in allShows:
+    query = gql(query_show)
+    allShows = gql_client.execute(query)
+    if isinstance(allShows, dict) and 'allShows' in allShows: 
         allShows = allShows['allShows']
-        if allShows:
+        if isinstance(allShows, list) and allShows:
             for item in allShows:
                 slug = item['slug']
                 show = '/show/' + slug
@@ -110,10 +101,11 @@ def query_cate_slug(endpoints, gql_client):
   }
 }
 '''
-    allCategories = query_gql(gql_client, query_cate)
-    if 'allCategories' in allCategories:
+    query = gql(query_cate)
+    allCategories = gql_client.execute(query)
+    if isinstance(allCategories, dict) and 'allCategories' in allCategories:
         allCategories = allCategories['allCategories']
-        if allCategories: 
+        if isinstance(allCategories, list) and allCategories: 
             for item in allCategories:
                 slug = item['slug']
                 categories.append(slug)
@@ -139,10 +131,11 @@ def querty_latest_slug(endpoints, gql_client):
 
     }
   }'''
-    allPosts = query_gql(gql_client, query_latest)
-    if 'allPosts' in allPosts:
+    query = gql(query_latest)
+    allPosts = gql_client.execute(query)
+    if isinstance(allPosts, dict) and 'allPosts' in allPosts:
         allPosts = allPosts['allPosts']
-        if allPosts:
+        if isinstance(allPosts, list) and allPosts :
             for item in allPosts:
                 slug = item['slug']
                 post = '/story/' + slug
@@ -159,10 +152,11 @@ def query_post_slug(cate, gql_client):
     slug
     }
 }''' % cate
-    allPosts = query_gql(gql_client, query_post)
-    if 'allPosts' in allPosts:
+    query = gql(query_post)
+    allPosts = gql_client.execute(query)
+    if isinstance(allPosts, dict) and 'allPosts' in allPosts:
         allPosts = allPosts['allPosts']
-        if allPosts:
+        if isinstance(allPosts, list)and allPosts :
             for item in allPosts:
                 slug = item['slug']
                 post = '/story/' + slug
