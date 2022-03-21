@@ -90,12 +90,14 @@ def query_show_slug(endpoints, gql_client):
 }
     '''
     allShows = query_gql(gql_client, query_show)
-    allShows = allShows['allShows']
-    if allShows:
-        for item in allShows:
-            slug = item['slug']
-            show = '/show/' + slug
-            endpoints.append(show)
+    
+    if 'allShows' in allShows:
+        allShows = allShows['allShows']
+        if allShows:
+            for item in allShows:
+                slug = item['slug']
+                show = '/show/' + slug
+                endpoints.append(show)
     else:
         print("no show")
 
@@ -109,20 +111,21 @@ def query_cate_slug(endpoints, gql_client):
 }
 '''
     allCategories = query_gql(gql_client, query_cate)
-    allCategories = allCategories['allCategories']
-    if allCategories: 
-        for item in allCategories:
-            slug = item['slug']
-            categories.append(slug)
-            if slug == 'ombuds':
-                endpoints.append('/ombuds')
-                continue
-            if slug == 'stream':
-                slug = 'video'
-            cate = '/category/' + slug
-            endpoints.append(cate)
-    else:
-        print("no cate")
+    if 'allCategories' in allCategories:
+        allCategories = allCategories['allCategories']
+        if allCategories: 
+            for item in allCategories:
+                slug = item['slug']
+                categories.append(slug)
+                if slug == 'ombuds':
+                    endpoints.append('/ombuds')
+                    continue
+                if slug == 'stream':
+                    slug = 'video'
+                cate = '/category/' + slug
+                endpoints.append(cate)
+        else:
+            print("no cate")
     return categories 
 
 
@@ -137,14 +140,15 @@ def querty_latest_slug(endpoints, gql_client):
     }
   }'''
     allPosts = query_gql(gql_client, query_latest)
-    allPosts = allPosts['allPosts']
-    if allPosts:
-        for item in allPosts:
-            slug = item['slug']
-            post = '/story/' + slug
-            endpoints.append(post)
-    else:
-        print("no latest post")
+    if 'allPosts' in allPosts:
+        allPosts = allPosts['allPosts']
+        if allPosts:
+            for item in allPosts:
+                slug = item['slug']
+                post = '/story/' + slug
+                endpoints.append(post)
+        else:
+            print("no latest post")
 
 
 def query_post_slug(cate, gql_client):
@@ -156,12 +160,13 @@ def query_post_slug(cate, gql_client):
     }
 }''' % cate
     allPosts = query_gql(gql_client, query_post)
-    allPosts = allPosts['allPosts']
-    if allPosts:
-        for item in allPosts:
-            slug = item['slug']
-            post = '/story/' + slug
-            post_endpoint.append(post)
+    if 'allPosts' in allPosts:
+        allPosts = allPosts['allPosts']
+        if allPosts:
+            for item in allPosts:
+                slug = item['slug']
+                post = '/story/' + slug
+                post_endpoint.append(post)
     return post_endpoint
     
     
@@ -169,9 +174,8 @@ def query_post_slug(cate, gql_client):
 
 def generate_sitemap_xml(endpoint_slug):
     sitemap_template = __template__['sitmap']
-    sitemap = ''
+    sitemap = sitemap_template['header']
     lastmod = datetime.datetime.now().strftime('%Y-%m-%d')
-    sitemap += sitemap_template['header']
     for slug in endpoint_slug:
         loc = __base_url__ + slug
         if slug == '/':
@@ -246,9 +250,8 @@ def sitemap():
 
 def generate_sitemap_index_xml(sitemap_index_url):
     sitemap_index_template = __template__['sitemap_index']
-    index_sitemap = ''
+    index_sitemap = sitemap_index_template['header']
     lastmod = datetime.datetime.now().strftime('%Y-%m-%d')
-    index_sitemap += sitemap_index_template['header']
     for slug in sitemap_index_url:
         loc = __base_url__ + slug
         sitemap_tag = sitemap_index_template['urltag'].format(loc, lastmod)
