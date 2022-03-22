@@ -7,9 +7,9 @@ EXECSCRIPT=$2
 ENVFOLDER=.venv
 
 if cd $EXECFOLDER \
-    && ls
-    && pwd
-    && ls ./$ENVFOLDER/bin
+    && ls \
+    && pwd \
+    && ls ./$ENVFOLDER/bin \
     && . ./$ENVFOLDER/bin/activate \
     && shift 2 \
     && python3 $EXECSCRIPT $@ \
