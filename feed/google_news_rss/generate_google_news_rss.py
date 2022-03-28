@@ -83,7 +83,7 @@ __gql_client__ = create_authenticated_k5_client(config_graphql)
 # To retrieve the latest 25 published posts for the specified category
 __qgl_post_template__ = '''
 {
-    allPosts(where: {%s, categories_some: {slug: "%s"}, state: published}, sortBy: publishTime_DESC, first: %d) {
+    allPosts(where: {%s, categories_some: {slug: "%s"}, state: published, isAdvertised_not:true}, sortBy: publishTime_DESC, first: %d) {
         name
         slug
         briefHtml
