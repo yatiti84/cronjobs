@@ -86,7 +86,7 @@ __seven_days_ago__ = datetime.now(timezone.utc) - timedelta(days=7)
 # To retrieve the latest post published after a specified day
 __qgl_post_template__ = '''
 {
-    allPosts(where: {%s, isAdvertised_not:true}, sortBy: publishTime_DESC, first: %d) {
+    allPosts(where: %s, sortBy: publishTime_DESC, first: %d) {
         name
         slug
         briefHtml
