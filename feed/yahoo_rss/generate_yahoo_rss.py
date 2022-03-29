@@ -217,13 +217,13 @@ __rss_base__ = __file_config__['filePathBase']
 
 print(f'[{__main__.__file__}] generated rss: {fg.rss_str(pretty=False, extensions=True,encoding="UTF-8", xml_declaration=True).decode("UTF-8")}')
 
-# upload_data(
-#     bucket_name=__bucket_name__,
-#     data=fg.rss_str(pretty=False, extensions=True,
-#                     encoding='UTF-8', xml_declaration=True),
-#     content_type='application/xml; charset=utf-8',
-#     destination_blob_name=__rss_base__ +
-#     f'/{__file_config__["filenamePrefix"]}.{__file_config__["extension"]}'
-# )
+upload_data(
+    bucket_name=__bucket_name__,
+    data=fg.rss_str(pretty=False, extensions=True,
+                    encoding='UTF-8', xml_declaration=True),
+    content_type='application/xml; charset=utf-8',
+    destination_blob_name=__rss_base__ +
+    f'/{__file_config__["filenamePrefix"]}.{__file_config__["extension"]}'
+)
 
 print(f'[{__main__.__file__}] exiting... goodbye...')
