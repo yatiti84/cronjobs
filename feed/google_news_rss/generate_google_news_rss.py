@@ -88,6 +88,7 @@ __qgl_post_template__ = '''
         slug
         briefHtml
         contentHtml
+        heroCaption
         heroImage {
             urlOriginal
             name
@@ -193,10 +194,14 @@ for id, category in __categories__.items():
         if item['heroImage'] is not None:
             fe.media.content(
                 content={'url': item['heroImage']['urlOriginal'], 'medium': 'image'}, group=None)
+            if item['heroCaption'] is not None:
+                alt = item['heroCaption']
+            else:
+                alt = item['heroImage']['name'].replace(item['slug'], '')
             content += '<img src="%s" alt="%s" />' % (
-                item['heroImage']['urlOriginal'], item['heroImage']['name'])
+                item['heroImage']['urlOriginal'], alt)
         if item['contentHtml'] is not None:
-            content += item['contentHtml']
+            content += re.sub(__config_feed__['ytb_iframe_regex'], '',item['contentHtml'])
         if len(item['relatedPosts']) > 0:
             #content += __config_feed__['item']['relatedPostPrependHtml']
             for related_post in item['relatedPosts'][:3]:

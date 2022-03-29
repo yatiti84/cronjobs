@@ -79,6 +79,7 @@ with open(getattr(args, GRAPHQL_CMS_CONFIG_KEY), 'r') as stream:
     config_graphql = yaml.safe_load(stream)
 number = getattr(args, NUMBER_KEY)
 
+
 __gql_client__ = create_authenticated_k5_client(config_graphql)
 
 __seven_days_ago__ = datetime.now(timezone.utc) - timedelta(days=7)
@@ -91,6 +92,7 @@ __qgl_post_template__ = '''
         slug
         briefHtml
         contentHtml
+        heroCaption
         heroImage {
             urlOriginal
             name
@@ -161,10 +163,14 @@ for item in __result__['allPosts']:
     if item['heroImage'] is not None:
         fe.media.content(
             content={'url': item['heroImage']['urlOriginal'], 'medium': 'image'}, group=None)
+        if item['heroCaption'] is not None:
+            alt = item['heroCaption']
+        else:
+            alt = item['heroImage']['name'].replace(item['slug'], '')
         content += '<img src="%s" alt="%s" />' % (
-            item['heroImage']['urlOriginal'], item['heroImage']['name'])
+            item['heroImage']['urlOriginal'], alt)
     if item['contentHtml'] is not None:
-        content += item['contentHtml']
+        content += re.sub(__config_feed__['item']['ytb_iframe_regex'], '',item['contentHtml'])
     if len(item['relatedPosts']) > 0:
         content += __config_feed__['item']['relatedPostPrependHtml']
         for related_post in item['relatedPosts'][:3]:
@@ -211,13 +217,13 @@ __rss_base__ = __file_config__['filePathBase']
 
 print(f'[{__main__.__file__}] generated rss: {fg.rss_str(pretty=False, extensions=True,encoding="UTF-8", xml_declaration=True).decode("UTF-8")}')
 
-upload_data(
-    bucket_name=__bucket_name__,
-    data=fg.rss_str(pretty=False, extensions=True,
-                    encoding='UTF-8', xml_declaration=True),
-    content_type='application/xml; charset=utf-8',
-    destination_blob_name=__rss_base__ +
-    f'/{__file_config__["filenamePrefix"]}.{__file_config__["extension"]}'
-)
+# upload_data(
+#     bucket_name=__bucket_name__,
+#     data=fg.rss_str(pretty=False, extensions=True,
+#                     encoding='UTF-8', xml_declaration=True),
+#     content_type='application/xml; charset=utf-8',
+#     destination_blob_name=__rss_base__ +
+#     f'/{__file_config__["filenamePrefix"]}.{__file_config__["extension"]}'
+# )
 
 print(f'[{__main__.__file__}] exiting... goodbye...')
