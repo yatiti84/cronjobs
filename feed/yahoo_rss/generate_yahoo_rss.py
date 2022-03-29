@@ -164,11 +164,11 @@ for item in __result__['allPosts']:
         fe.media.content(
             content={'url': item['heroImage']['urlOriginal'], 'medium': 'image'}, group=None)
         if item['heroCaption'] is not None:
-            alt = item['heroCaption']
+            content += '<img src="%s" alt="%s" />' % (
+            item['heroImage']['urlOriginal'], item['heroCaption'])
         else:
-            alt = item['heroImage']['name'].replace(item['slug'], '')
-        content += '<img src="%s" alt="%s" />' % (
-            item['heroImage']['urlOriginal'], alt)
+           content += '<img src="%s" alt="%s" />' % (
+            item['heroImage']['urlOriginal'])
     if item['contentHtml'] is not None:
         content += re.sub(__config_feed__['item']['ytb_iframe_regex'], '',item['contentHtml'])
     if len(item['relatedPosts']) > 0:

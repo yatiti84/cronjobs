@@ -195,7 +195,7 @@ if __name__ == '__main__':
    
         if article['contentHtml']is not None:
             content = re.sub(u'[^\u0020-\uD7FF\u0009\u000A\u000D\uE000-\uFFFD\U00010000-\U0010FFFF]+', '', article['contentHtml'])
-            content = re.sub(config['feed']['item']['ytb_iframe_regex'], '',article['contentHtml'])
+            #content = re.sub(config['feed']['item']['ytb_iframe_regex'], '',article['contentHtml'])
         else: content = ''
         title = re.sub(u'[^\u0020-\uD7FF\u0009\u000A\u000D\uE000-\uFFFD\U00010000-\U0010FFFF]+', '', article['name'])
         item = {
