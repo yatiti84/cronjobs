@@ -198,7 +198,7 @@ for id, category in __categories__.items():
                 content += '<img src="%s" alt="%s" />' % (
                 item['heroImage']['urlOriginal'], item['heroCaption'])
             else:
-                content += '<img src="%s" alt="%s" />' % (
+                content += '<img src="%s" />' % (
                     item['heroImage']['urlOriginal'])
         if item['contentHtml'] is not None:
             #content += re.sub(__config_feed__['ytb_iframe_regex'], '',item['contentHtml'])

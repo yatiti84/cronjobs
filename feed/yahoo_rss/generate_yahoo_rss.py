@@ -167,7 +167,7 @@ for item in __result__['allPosts']:
             content += '<img src="%s" alt="%s" />' % (
             item['heroImage']['urlOriginal'], item['heroCaption'])
         else:
-           content += '<img src="%s" alt="%s" />' % (
+           content += '<img src="%s" />' % (
             item['heroImage']['urlOriginal'])
     if item['contentHtml'] is not None:
         content += re.sub(__config_feed__['item']['ytb_iframe_regex'], '',item['contentHtml'])
