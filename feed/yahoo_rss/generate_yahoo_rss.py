@@ -59,26 +59,63 @@ def create_authenticated_k5_client(config_graphql: dict) -> Client:
 
 print(f'[{__main__.__file__}] executing...')
 
-CONFIG_KEY = 'config'
-GRAPHQL_CMS_CONFIG_KEY = 'graphqlCMS'
-NUMBER_KEY = 'number'
+# CONFIG_KEY = 'config'
+# GRAPHQL_CMS_CONFIG_KEY = 'graphqlCMS'
+# NUMBER_KEY = 'number'
 
-yaml_parser = argparse.ArgumentParser(
-    description='Process configuration of generate_google_news_rss')
-yaml_parser.add_argument('-c', '--config', dest=CONFIG_KEY,
-                         help='config file for generate_google_news_rss', metavar='FILE', type=str)
-yaml_parser.add_argument('-g', '--config-graphql', dest=GRAPHQL_CMS_CONFIG_KEY,
-                         help='graphql config file for generate_google_news_rss', metavar='FILE', type=str, required=True)
-yaml_parser.add_argument('-m', '--max-number', dest=NUMBER_KEY,
-                         help='number of feed items', metavar='75', type=int, required=True)
-args = yaml_parser.parse_args()
+# yaml_parser = argparse.ArgumentParser(
+#     description='Process configuration of generate_google_news_rss')
+# yaml_parser.add_argument('-c', '--config', dest=CONFIG_KEY,
+#                          help='config file for generate_google_news_rss', metavar='FILE', type=str)
+# yaml_parser.add_argument('-g', '--config-graphql', dest=GRAPHQL_CMS_CONFIG_KEY,
+#                          help='graphql config file for generate_google_news_rss', metavar='FILE', type=str, required=True)
+# yaml_parser.add_argument('-m', '--max-number', dest=NUMBER_KEY,
+#                          help='number of feed items', metavar='75', type=int, required=True)
+# args = yaml_parser.parse_args()
 
-with open(getattr(args, CONFIG_KEY), 'r') as stream:
-    config = yaml.safe_load(stream)
-with open(getattr(args, GRAPHQL_CMS_CONFIG_KEY), 'r') as stream:
-    config_graphql = yaml.safe_load(stream)
-number = getattr(args, NUMBER_KEY)
-
+# with open(getattr(args, CONFIG_KEY), 'r') as stream:
+#     config = yaml.safe_load(stream)
+# with open(getattr(args, GRAPHQL_CMS_CONFIG_KEY), 'r') as stream:
+#     config_graphql = yaml.safe_load(stream)
+# number = getattr(args, NUMBER_KEY)
+number = 100
+config_graphql = {
+  "username": "admin@mirrormedia.mg",
+  "password": "j8oiPepMmmUqqDunNgCRVpeBrUbpKh2ykjnfTtarx7vkT27T2S73nUmEroaN3BCuSQ9ZCt9ZLnYrSUcPKat5VMbbEHNLSbtWRa4x6vPs2pc",
+  "apiEndpoint": "https://api-staging.mnews.tw/admin/api",
+}
+config = {
+  "baseURL": "https://staging.mnews.tw/story/",
+  "postWhereFilter": '{source_not:"mm", state: published, isAdvertised_not:true}',
+  "feed":
+    {
+      "title": "鏡新聞",
+      "description": "鏡新聞",
+      "id": "https://staging.mnews.tw/",
+      "image":
+        {
+          "url": "https://staging.mnews.tw/logo.png",
+          "title": "title",
+          "link": "https://staging.mnews.tw/",
+        },
+      "item":
+        {
+          "relatedPostPrependHtml": '<br/><p class="read-more-vendor"><span>更多《鏡新聞》報導</span>',
+          "ytb_iframe_regex":'<iframe.*?src="https://www.youtube.com/embed.*?</iframe>',
+        },
+      "timezone": "Asia/Taipei",
+      "copyright": "Copyright 2019-2020",
+      "link": "https://staging.mnews.tw/",
+      "ttl": 300,
+    },
+  "file":
+    {
+      "gcsBucket": "static-mnews-tw-staging",
+      "filePathBase": "rss",
+      "filenamePrefix": "yahoo",
+      "extension": "xml",
+    },
+}
 
 __gql_client__ = create_authenticated_k5_client(config_graphql)
 
@@ -154,12 +191,6 @@ for item in __result__['allPosts']:
     fe.updated(util.formatRFC2822(
         parser.isoparse(item['updatedAt']).astimezone(__timezone__)))
     content = ''
-
-    brief = item['briefHtml']
-    if brief is not None:
-        brief = re.sub(u'[^\u0020-\uD7FF\u0009\u000A\u000D\uE000-\uFFFD\U00010000-\U0010FFFF]+', '', brief)
-        fe.description(description=brief, isSummary=True)
-        content += brief
     if item['heroImage'] is not None:
         fe.media.content(
             content={'url': item['heroImage']['urlOriginal'], 'medium': 'image'}, group=None)
@@ -169,6 +200,12 @@ for item in __result__['allPosts']:
         else:
            content += '<img src="%s" />' % (
             item['heroImage']['urlOriginal'])
+    brief = item['briefHtml']
+    if brief is not None:
+        brief = re.sub(u'[^\u0020-\uD7FF\u0009\u000A\u000D\uE000-\uFFFD\U00010000-\U0010FFFF]+', '', brief)
+        fe.description(description=brief, isSummary=True)
+        content += brief
+    
     if item['contentHtml'] is not None:
         content += re.sub(__config_feed__['item']['ytb_iframe_regex'], '',item['contentHtml'])
     if len(item['relatedPosts']) > 0:
@@ -217,13 +254,15 @@ __rss_base__ = __file_config__['filePathBase']
 
 print(f'[{__main__.__file__}] generated rss: {fg.rss_str(pretty=False, extensions=True,encoding="UTF-8", xml_declaration=True).decode("UTF-8")}')
 
-upload_data(
-    bucket_name=__bucket_name__,
-    data=fg.rss_str(pretty=False, extensions=True,
-                    encoding='UTF-8', xml_declaration=True),
-    content_type='application/xml; charset=utf-8',
-    destination_blob_name=__rss_base__ +
-    f'/{__file_config__["filenamePrefix"]}.{__file_config__["extension"]}'
-)
-
+# upload_data(
+#     bucket_name=__bucket_name__,
+#     data=fg.rss_str(pretty=False, extensions=True,
+#                     encoding='UTF-8', xml_declaration=True),
+#     content_type='application/xml; charset=utf-8',
+#     destination_blob_name=__rss_base__ +
+#     f'/{__file_config__["filenamePrefix"]}.{__file_config__["extension"]}'
+# )
+data=fg.rss_str(pretty=False, extensions=True,encoding='UTF-8', xml_declaration=True)
+with open ('yahoo_rss.xml', 'wb') as f:
+    f.write(data)
 print(f'[{__main__.__file__}] exiting... goodbye...')
