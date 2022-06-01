@@ -148,7 +148,7 @@ def query_post_slug(cate, gql_client):
     post_endpoint = []
     query_post = '''query{
     allPosts(where:{state:published, categories_some:{slug:"%s"}
-    }, sortBy:publishTime_DESC, first:75){
+    }, sortBy:publishTime_DESC, first:200){
     slug
     }
 }''' % cate
