@@ -15,6 +15,7 @@ import hashlib
 import logging
 import yaml
 import re
+import json
 
 
 def create_authenticated_k5_client(config_graphql: dict) -> Client:
@@ -56,6 +57,18 @@ def create_authenticated_k5_client(config_graphql: dict) -> Client:
         fetch_schema_from_transport=False,
     )
 
+def replace_alt_with_descrption(contentHtml, contentApiData, img_list):
+    for img in img_list:
+        if 'alt' in img:
+            alt = re.findall('alt=\".*?\"', img)
+            img_name = re.findall('\".*\"', alt[0])
+            img_name = img_name[0].replace('"', '')
+            for apidata_item in contentApiData:
+                if apidata_item['type'] =='image' and apidata_item['content'][0]['name'] == img_name:
+                    new_description = apidata_item['content'][0]['title']
+                    contentHtml = contentHtml.replace(alt[0], f'alt="{new_description}"')
+                    break
+    return contentHtml
 
 print(f'[{__main__.__file__}] executing...')
 
@@ -92,6 +105,7 @@ __qgl_post_template__ = '''
         slug
         briefHtml
         contentHtml
+        contentApiData
         heroCaption
         heroImage {
             urlOriginal
@@ -170,7 +184,12 @@ for item in __result__['allPosts']:
         content += brief
     
     if item['contentHtml'] is not None:
-        content += re.sub(__config_feed__['item']['ytb_iframe_regex'], '',item['contentHtml'])
+        contentHtml = re.sub(__config_feed__['item']['ytb_iframe_regex'], '',item['contentHtml'])
+        contentApiData = json.loads(item['contentApiData'])
+        img_list = re.findall('<img.*?>', contentHtml)
+        if img_list:
+            contentHtml = replace_alt_with_descrption(contentHtml, contentApiData, img_list)
+        content += contentHtml
     if len(item['relatedPosts']) > 0:
         content += __config_feed__['item']['relatedPostPrependHtml']
         for related_post in item['relatedPosts'][:3]:
