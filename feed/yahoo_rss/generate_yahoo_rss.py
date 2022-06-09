@@ -64,8 +64,11 @@ def replace_alt_with_descrption(contentHtml, contentApiData, img_list):
             img_name = re.findall('\".*\"', alt[0])
             img_name = img_name[0].replace('"', '')
             for apidata_item in contentApiData:
-                if apidata_item['type'] =='image' and apidata_item['content'][0]['name'] == img_name:
-                    new_description = apidata_item['content'][0]['title']
+                if apidata_item['type'] =='image' and 'name' in apidata_item['content'][0] and apidata_item['content'][0]['name'] == img_name:
+                    if 'title' in apidata_item['content'][0]:
+                        new_description = apidata_item['content'][0]['title']
+                    else:
+                        new_description = ''
                     contentHtml = contentHtml.replace(alt[0], f'alt="{new_description}"')
                     break
     return contentHtml
