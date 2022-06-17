@@ -7,14 +7,10 @@ from lxml.etree import CDATA, tostring
 import __main__
 import argparse
 import gzip
-import json
 import logging
 import lxml.etree as ET
 import pytz
-import sys
 import time
-import unicodedata
-import urllib.request
 import uuid
 import yaml
 import re
@@ -104,8 +100,15 @@ __qgl_post_template__ = '''
         relatedPosts {
             name
             slug
+            heroImage {
+            urlOriginal
+            
+            }
         }
         writers {
+            name
+        }
+        tags{
             name
         }
         publishTime
@@ -142,6 +145,8 @@ def recparse(parentItem, obj):
                 thisItem.text = stringWrapper(name, value)
     elif t is list:
         raise Exception('unsupported structure')
+    elif t is str:
+        parentItem.text = obj
     return
 
 
@@ -192,8 +197,7 @@ if __name__ == '__main__':
     for article in articles:
         availableDate = max(tsConverter(
             article['publishTime']), tsConverter(article['updatedAt']))
-   
-        if article['contentHtml']is not None:
+        if article['contentHtml'] is not None:
             content = re.sub(u'[^\u0020-\uD7FF\u0009\u000A\u000D\uE000-\uFFFD\U00010000-\U0010FFFF]+', '', article['contentHtml'])
             #content = re.sub(config['feed']['item']['ytb_iframe_regex'], '',article['contentHtml'])
         else: content = ''
@@ -213,14 +217,31 @@ if __name__ == '__main__':
                         'content': content
                 },
             },
-            'recommendArticles': {
-                'article': [{'title': x['name'], 'url': base_url + '/' + x['slug'] + '/'} for x in article['relatedPosts'][:6] if x]
-            },
-            'author': config['feed']['item']['author']
+            'author': config['feed']['item']['author'],
+            'sourceUrl': f"{base_url}{article['slug']}",
+            
         }
         if article['heroImage'] is not None:
             item['thumbnail'] = article['heroImage']['urlOriginal']
-
+        if article['updatedAt'] is not None:
+            updateTimeUnix = tsConverter(article['updatedAt'])
+            item['updateTimeUnix'] = updateTimeUnix
+        if article['relatedPosts']:
+            recommendArticles = []
+            for relatedPost in article['relatedPosts'][:6]:
+                if relatedPost:
+                    recommendArticle = {
+                        'title': relatedPost['name'], 'url': base_url + '/' + relatedPost['slug'] + '/'}
+                    if relatedPost['heroImage'] is not None:
+                        recommendArticle['thumbnail'] = relatedPost['heroImage']['urlOriginal']
+                    recommendArticles.append(recommendArticle)
+            item['recommendArticles'] = {'article': recommendArticles}
+        if article['tags']:
+            tags = []
+            for tag in article['tags']:
+                if tag:
+                    tags.append(tag['name'])
+            item['tags'] = {'tag':tags}
         mainXML['article'].append(item)
 
     root = ET.Element('articles')
