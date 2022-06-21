@@ -122,6 +122,12 @@ __gql_query__ = gql(__qgl_post_template__ %
 __result__ = __gql_client__.execute(__gql_query__)
 
 # Can not accept structure contains 'array of array'
+def generate_heroImge_tag(article):
+    if article['heroImage'] is None:
+        return f"<img alt=\"logo\" src=\"{config['feed']['item']['logo_url']}\">"
+    if article['heroCaption'] :
+        return f"<img alt=\"{article['heroCaption']}\" src=\"{article['heroImage']['urlOriginal']}\">"
+    return f"<img src=\"{article['heroImage']['urlOriginal']}\">"
 
 
 def recparse(parentItem, obj):
@@ -198,8 +204,11 @@ if __name__ == '__main__':
         availableDate = max(tsConverter(
             article['publishTime']), tsConverter(article['updatedAt']))
         if article['contentHtml'] is not None:
-            content = re.sub(u'[^\u0020-\uD7FF\u0009\u000A\u000D\uE000-\uFFFD\U00010000-\U0010FFFF]+', '', article['contentHtml'])
-            #content = re.sub(config['feed']['item']['ytb_iframe_regex'], '',article['contentHtml'])
+            ytb_iframe = re.search(config['feed']['item']['ytb_iframe_regex'], article['contentHtml'])
+            ytb_iframe_replacement = generate_heroImge_tag(article) if ytb_iframe else ""
+            contentHtml = re.sub(config['feed']['item']['ytb_iframe_regex'], '', article['contentHtml'])
+            contentHtml = re.sub(u'[^\u0020-\uD7FF\u0009\u000A\u000D\uE000-\uFFFD\U00010000-\U0010FFFF]+', '', contentHtml)
+            content = ytb_iframe_replacement + contentHtml# add hero img in beginning of content
         else: content = ''
         title = re.sub(u'[^\u0020-\uD7FF\u0009\u000A\u000D\uE000-\uFFFD\U00010000-\U0010FFFF]+', '', article['name'])
         item = {
