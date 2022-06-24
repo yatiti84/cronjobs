@@ -182,7 +182,7 @@ def upload_data(bucket_name: str, data: bytes, content_type: str, destination_bl
     blob.upload_from_string(
         data=gzip.compress(data=data, compresslevel=9), content_type=content_type, client=storage_client)
     blob.content_language = 'zh'
-    blob.cache_control = 'max-age=300,public'
+    blob.cache_control = 'max-age=300,public,must-revalidate'
     blob.patch()
 
     print(
