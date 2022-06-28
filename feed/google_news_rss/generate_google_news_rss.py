@@ -6,65 +6,34 @@ import __main__
 import argparse
 import logging
 import yaml
-
+import ast
 CONFIG_KEY = 'config'
 GRAPHQL_CMS_CONFIG_KEY = 'graphqlCMS'
 NUMBER_KEY = 'number'
 
 
-# yaml_parser = argparse.ArgumentParser(
-#     description='Process configuration of generate_google_news_rss')
-# yaml_parser.add_argument('-c', '--config', dest = CONFIG_KEY,
-#                          help = 'config file for generate_google_news_rss', metavar = 'FILE', type=str)
-# yaml_parser.add_argument('-g', '--config-graphql', dest = GRAPHQL_CMS_CONFIG_KEY,
-#                          help = 'graphql config file for generate_google_news_rss', metavar = 'FILE', type = str, required = True)
-# yaml_parser.add_argument('-m', '--max-number', dest = NUMBER_KEY,
-#                          help = 'number of feed items', metavar = '75', type = int, required = True)
-# args = yaml_parser.parse_args()
+yaml_parser = argparse.ArgumentParser(
+    description='Process configuration of generate_google_news_rss')
+yaml_parser.add_argument('-c', '--config', dest = CONFIG_KEY,
+                         help = 'config file for generate_google_news_rss', metavar = 'FILE', type=str)
+yaml_parser.add_argument('-g', '--config-graphql', dest = GRAPHQL_CMS_CONFIG_KEY,
+                         help = 'graphql config file for generate_google_news_rss', metavar = 'FILE', type = str, required = True)
+yaml_parser.add_argument('-m', '--max-number', dest = NUMBER_KEY,
+                         help = 'number of feed items', metavar = '75', type = int, required = True)
+args = yaml_parser.parse_args()
 
-# with open(getattr(args, CONFIG_KEY), 'r') as stream:
-#     config = yaml.safe_load(stream)
-# with open(getattr(args, GRAPHQL_CMS_CONFIG_KEY), 'r') as stream:
-#     config_graphql = yaml.safe_load(stream)
-# number = getattr(args, NUMBER_KEY)
-config = {
-    "base_url": 'https://dev.mnews.tw',
+with open(getattr(args, CONFIG_KEY), 'r') as stream:
+    config = yaml.safe_load(stream)
+with open(getattr(args, GRAPHQL_CMS_CONFIG_KEY), 'r') as stream:
+    config_graphql = yaml.safe_load(stream)
+number = getattr(args, NUMBER_KEY)
+import os
+now = os.path.abspath(os.getcwd())
+print(now)
+with open("./configs/config.yaml", 'r') as f:
+    f = ast.literal_eval(f.read())
+    print(f)
 
-    "template": {
-        "sitmap": {
-            "header": '''<?xml version="1.0" encoding="UTF-8"?>
-                            <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9"> ''', 
-            "urltag": '''\n<url>
-                                <loc>{}</loc>
-                                <news:news>
-                                    <news:publication>
-                                    <news:name>鏡新聞</news:name>
-                                    <news:language>zh-tw</news:language>
-                                    </news:publication>
-                                    <news:publication_date>{}</news:publication_date>
-                                    <news:title>{}</news:title>
-                                </news:news>
-                                </url>''',
-            "endtag": ' \n</urlset>'},
-        "sitemap_index": {
-            "header": '<?xml version="1.0" encoding="UTF-8"?><sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">', 
-            "urltag": '<sitemap><loc>{}</loc><lastmod>{}</lastmod></sitemap>', 
-            "endtag": '</sitemapindex>'}
-    },
-    "file":{
-        "bucket_name" : 'static-mnews-tw-dev',
-        "destination_prefix" : 'rss/',
-        "src_file_name":{"cate_post": 'google_news_{}.xml', "sitemap_index": 'google_news_index.xml' }
-        
-    }
-
-}
-config_graphql = {
-  "username": "cronjobs@mirrormedia.mg",
-  "password": "nAP%K1v1acmH4wMniYFO3&pKqHvE2JabCfMmwrTd",
-  "apiEndpoint": "https://api-dev.mnews.tw/admin/api",
-}
-number = 75
 print(f'[{__main__.__file__}] executing...')
 
 __base_url__ = config['base_url']
