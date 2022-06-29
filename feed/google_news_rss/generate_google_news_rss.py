@@ -6,7 +6,7 @@ import __main__
 import argparse
 import logging
 import yaml
-
+import ast
 CONFIG_KEY = 'config'
 GRAPHQL_CMS_CONFIG_KEY = 'graphqlCMS'
 NUMBER_KEY = 'number'
@@ -27,6 +27,12 @@ with open(getattr(args, CONFIG_KEY), 'r') as stream:
 with open(getattr(args, GRAPHQL_CMS_CONFIG_KEY), 'r') as stream:
     config_graphql = yaml.safe_load(stream)
 number = getattr(args, NUMBER_KEY)
+import os
+now = os.path.abspath(os.getcwd())
+print(now)
+with open("./configs/config.yaml", 'r') as f:
+    f = ast.literal_eval(f.read())
+    print(f)
 
 print(f'[{__main__.__file__}] executing...')
 
@@ -139,7 +145,7 @@ def query_post(cate, gql_client):
 def generate_sitemap_content(posts_slug_title):
     sitemap_template = __template__['sitmap']
     sitemap = sitemap_template['header']
-    lastmod = datetime.datetime.now().strftime('%Y-%m-%d')
+    lastmod = datetime.now().strftime('%Y-%m-%d')
     for slug, title in posts_slug_title.items():
         loc = __base_url__ + '/story/' + slug
         url_tag = sitemap_template['urltag'].format(loc, lastmod, title)
@@ -151,7 +157,7 @@ def generate_sitemap_content(posts_slug_title):
 def generate_sitemap_index_content(sitemap_index_url):
     sitemap_index_template = __template__['sitemap_index']
     index_sitemap = sitemap_index_template['header']
-    lastmod = datetime.datetime.now().strftime('%Y-%m-%d')
+    lastmod = datetime.now().strftime('%Y-%m-%d')
     for slug in sitemap_index_url:
         loc = __base_url__ + slug
         sitemap_tag = sitemap_index_template['urltag'].format(loc, lastmod)
