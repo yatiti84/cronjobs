@@ -220,21 +220,14 @@ if __name__ == '__main__':
             'title': title,
             'category': article['categories'][0]['name'] if len(article['categories']) > 0 else [],
             'publishTimeUnix': availableDate,
-            'contentType': 0,
-            'contents': {
-                'text': {
-                        'content': content
-                },
-            },
-            'author': config['feed']['item']['author'],
-            'sourceUrl': f"{base_url}{article['slug']}",
-            
         }
-        if article['heroImage'] is not None:
-            item['thumbnail'] = article['heroImage']['urlOriginal']
         if article['updatedAt'] is not None:
             updateTimeUnix = tsConverter(article['updatedAt'])
             item['updateTimeUnix'] = updateTimeUnix
+        item['contentType'] = 0
+        if article['heroImage'] is not None:
+            item['thumbnail'] = article['heroImage']['urlOriginal']
+        item['contents'] = {'text':{'content': content}}
         if article['relatedPosts']:
             recommendArticles = []
             for relatedPost in article['relatedPosts'][:6]:
@@ -245,6 +238,8 @@ if __name__ == '__main__':
                         recommendArticle['thumbnail'] = relatedPost['heroImage']['urlOriginal']
                     recommendArticles.append(recommendArticle)
             item['recommendArticles'] = {'article': recommendArticles}
+        item['author'] = config['feed']['item']['author']
+        item['sourceUrl'] = f"{base_url}{article['slug']}"        
         if article['tags']:
             tags = []
             for tag in article['tags']:
