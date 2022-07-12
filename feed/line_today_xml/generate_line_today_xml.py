@@ -233,7 +233,7 @@ if __name__ == '__main__':
             for relatedPost in article['relatedPosts'][:6]:
                 if relatedPost:
                     recommendArticle = {
-                        'title': relatedPost['name'], 'url': base_url + relatedPost['slug']}
+                        'title': relatedPost['name'], 'url': base_url + relatedPost['slug'] + config['feed']['item']['utmSource']}
                     if relatedPost['heroImage'] is not None:
                         recommendArticle['thumbnail'] = relatedPost['heroImage']['urlOriginal']
                     recommendArticles.append(recommendArticle)
