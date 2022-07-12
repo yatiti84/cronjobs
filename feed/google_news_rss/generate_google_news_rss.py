@@ -1,12 +1,19 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timezone
+# workaround as feegen raise error: AttributeError: module 'lxml' has no attribute 'etree'
+from lxml import etree
+from dateutil import parser, tz
+from feedgen import util
+from feedgen.feed import FeedGenerator
 from google.cloud import storage
 from gql import gql, Client
 from gql.transport.aiohttp import AIOHTTPTransport
 import __main__
 import argparse
+import gzip
 import logging
 import yaml
-import ast
+import re
+
 CONFIG_KEY = 'config'
 GRAPHQL_CMS_CONFIG_KEY = 'graphqlCMS'
 NUMBER_KEY = 'number'
@@ -14,12 +21,12 @@ NUMBER_KEY = 'number'
 
 yaml_parser = argparse.ArgumentParser(
     description='Process configuration of generate_google_news_rss')
-yaml_parser.add_argument('-c', '--config', dest = CONFIG_KEY,
-                         help = 'config file for generate_google_news_rss', metavar = 'FILE', type=str)
-yaml_parser.add_argument('-g', '--config-graphql', dest = GRAPHQL_CMS_CONFIG_KEY,
-                         help = 'graphql config file for generate_google_news_rss', metavar = 'FILE', type = str, required = True)
-yaml_parser.add_argument('-m', '--max-number', dest = NUMBER_KEY,
-                         help = 'number of feed items', metavar = '75', type = int, required = True)
+yaml_parser.add_argument('-c', '--config', dest=CONFIG_KEY,
+                         help='config file for generate_google_news_rss', metavar='FILE', type=str)
+yaml_parser.add_argument('-g', '--config-graphql', dest=GRAPHQL_CMS_CONFIG_KEY,
+                         help='graphql config file for generate_google_news_rss', metavar='FILE', type=str, required=True)
+yaml_parser.add_argument('-m', '--max-number', dest=NUMBER_KEY,
+                         help='number of feed items', metavar='75', type=int, required=True)
 args = yaml_parser.parse_args()
 
 with open(getattr(args, CONFIG_KEY), 'r') as stream:
@@ -27,21 +34,8 @@ with open(getattr(args, CONFIG_KEY), 'r') as stream:
 with open(getattr(args, GRAPHQL_CMS_CONFIG_KEY), 'r') as stream:
     config_graphql = yaml.safe_load(stream)
 number = getattr(args, NUMBER_KEY)
-import os
-now = os.path.abspath(os.getcwd())
-print(now)
-with open("./configs/config.yaml", 'r') as f:
-    f = ast.literal_eval(f.read())
-    print(f)
 
 print(f'[{__main__.__file__}] executing...')
-
-__base_url__ = config['base_url']
-__template__ = config['template']
-__file_config__ = config['file']
-__bucket_name__ = __file_config__['bucket_name']
-__destination_prefix__ = __file_config__['destination_prefix']
-__src_file_name__ = __file_config__['src_file_name']
 
 
 def create_authenticated_k5_client(config_graphql: dict) -> Client:
@@ -50,16 +44,22 @@ def create_authenticated_k5_client(config_graphql: dict) -> Client:
     # Authenticate through GraphQL
 
     gql_endpoint = config_graphql['apiEndpoint']
-    gql_transport = AIOHTTPTransport(url=gql_endpoint)
-    gql_client = Client(transport=gql_transport, fetch_schema_from_transport=False)
-    gql_mutation_authenticate_get_token = '''
+    gql_transport = AIOHTTPTransport(
+        url=gql_endpoint,
+    )
+    gql_client = Client(
+        transport=gql_transport,
+        fetch_schema_from_transport=False,
+    )
+    qgl_mutation_authenticate_get_token = '''
     mutation {
         authenticate: authenticateUserWithPassword(email: "%s", password: "%s") {
             token
         }
     }
     '''
-    mutation = gql_mutation_authenticate_get_token % (config_graphql['username'], config_graphql['password'])
+    mutation = qgl_mutation_authenticate_get_token % (
+        config_graphql['username'], config_graphql['password'])
 
     token = gql_client.execute(gql(mutation))['authenticate']['token']
 
@@ -78,132 +78,158 @@ def create_authenticated_k5_client(config_graphql: dict) -> Client:
     )
 
 
-def upload_blob(bucket_name, source_file_name, destination_blob_name):
-    """Uploads a file to the bucket."""
+__gql_client__ = create_authenticated_k5_client(config_graphql)
+
+# To retrieve the latest 25 published posts for the specified category
+__qgl_post_template__ = '''
+{
+    allPosts(where: {%s, categories_some: {slug: "%s"}, state: published, isAdvertised_not:true}, sortBy: publishTime_DESC, first: %d) {
+        name
+        slug
+        briefHtml
+        contentHtml
+        heroCaption
+        heroImage {
+            urlOriginal
+            name
+        }
+        categories {
+            name
+            slug
+        }
+        relatedPosts {
+            name
+            slug
+        }
+        writers {
+            name
+        }
+        publishTime
+        updatedAt
+    }
+}
+
+'''
+
+
+__base_url__ = config['baseURL']
+
+
+def upload_data(bucket_name: str, data: bytes, content_type: str, destination_blob_name: str):
+    '''Uploads a file to the bucket.'''
+    # bucket_name = 'your-bucket-name'
+    # data = 'storage-object-content'
+
+    # Instantiates a client
     storage_client = storage.Client()
+
     bucket = storage_client.bucket(bucket_name)
     blob = bucket.blob(destination_blob_name)
-    blob.upload_from_filename(source_file_name)
+    blob.content_encoding = 'gzip'
+
+    print(
+        f'[{__main__.__file__}] uploadling data to gs://{bucket_name}{destination_blob_name}')
+
+    blob.upload_from_string(
+        data=gzip.compress(data=data, compresslevel=9), content_type=content_type, client=storage_client)
     blob.content_language = 'zh'
-    blob.cache_control = 'max-age=300,public,must-revalidate'
-    blob.content_type = 'application/xml; charset=utf-8'
+    blob.cache_control = 'max-age=300,public'
     blob.patch()
 
     print(
-        "File {} uploaded to {}.".format(
-            source_file_name, destination_blob_name
-        )
+        f'[{__main__.__file__}] finished uploading gs://{bucket_name}{destination_blob_name}')
+
+
+__categories__ = config['categories']
+
+__file_config__ = config['file']
+# The name for the new bucket
+__bucket_name__ = __file_config__['gcsBucket']
+
+# rss folder path
+__rss_base__ = __file_config__['filePathBase']
+
+__config_feed__ = config['feed']
+# the timezone for rss
+__timezone__ = tz.gettz(__config_feed__['timezone'])
+
+for id, category in __categories__.items():
+    print(f'[{__main__.__file__}] retrieving data for category({category["slug"]})')
+    query = gql(__qgl_post_template__ %
+                (config['postWhereSourceFilter'], category["slug"], number))
+    result = __gql_client__.execute(query)
+
+    fg = FeedGenerator()
+    fg.load_extension('media', atom=False, rss=True)
+    fg.load_extension('dc', atom=False, rss=True)
+    fg.title(__config_feed__['title'])
+    fg.description(__config_feed__['description'])
+    fg.id(__config_feed__['id'])
+    fg.pubDate(datetime.now(timezone.utc).astimezone(__timezone__))
+    fg.updated(datetime.now(timezone.utc).astimezone(__timezone__))
+    fg.image(url=__config_feed__['image']['url'],
+             title=__config_feed__['image']['title'], link=__config_feed__['image']['link'])
+    fg.rights(rights=__config_feed__['copyright'])
+    fg.link(href=__config_feed__['link'], rel='alternate')
+    fg.ttl(__config_feed__['ttl'])  # 5 minutes
+    fg.language('zh-TW')
+
+    print('total rows: ' + str(len(result['allPosts'])))
+    for item in result['allPosts']:
+        fe = fg.add_entry(order='append')
+        fe.id(__base_url__+item['slug'])
+        name = re.sub(
+            u'[^\u0020-\uD7FF\u0009\u000A\u000D\uE000-\uFFFD\U00010000-\U0010FFFF]+', '', item['name'])
+        fe.title(name)
+        fe.link(href=__base_url__+item['slug'], rel='alternate')
+        fe.guid(__base_url__ + item['slug'])
+        fe.pubDate(util.formatRFC2822(
+            parser.isoparse(item['publishTime']).astimezone(__timezone__)))
+
+        content = ''
+        brief = item['briefHtml']
+        if brief is not None:
+            brief = re.sub(
+                u'[^\u0020-\uD7FF\u0009\u000A\u000D\uE000-\uFFFD\U00010000-\U0010FFFF]+', '', brief)
+            fe.description(description=brief, isSummary=True)
+            content += brief
+        if item['heroImage'] is not None:
+            fe.media.content(
+                content={'url': item['heroImage']['urlOriginal'], 'medium': 'image'}, group=None)
+            if item['heroCaption'] is not None:
+                content += '<img src="%s" alt="%s" />' % (
+                    item['heroImage']['urlOriginal'], item['heroCaption'])
+            else:
+                content += '<img src="%s" />' % (
+                    item['heroImage']['urlOriginal'])
+        if item['contentHtml'] is not None:
+            #content += re.sub(__config_feed__['ytb_iframe_regex'], '',item['contentHtml'])
+            content += item['contentHtml']
+        if len(item['relatedPosts']) > 0:
+            #content += __config_feed__['item']['relatedPostPrependHtml']
+            for related_post in item['relatedPosts'][:3]:
+                content += '<br/><a href="%s">%s</a>' % (
+                    __base_url__+related_post['slug'], related_post['name'])
+        content = re.sub(
+            u'[^\u0020-\uD7FF\u0009\u000A\u000D\uE000-\uFFFD\U00010000-\U0010FFFF]+', '', content)
+        fe.content(content=content, type='CDATA')
+        fe.updated(util.formatRFC2822(
+            parser.isoparse(item['updatedAt'])))
+        if item['writers'] is not None:
+            fe.dc.dc_creator(creator=list(
+                map(lambda w: w['name'], item['writers'])))
+        if item['heroImage'] is not None:
+            fe.media.content(
+                content={'url': item['heroImage']['urlOriginal'], 'medium': 'image'}, group=None)
+
+    upload_data(
+        bucket_name=__bucket_name__,
+        data=fg.rss_str(pretty=True, extensions=True,
+                        encoding='UTF-8', xml_declaration=True),
+        content_type='application/xml; charset=utf-8',
+        destination_blob_name=__rss_base__ +
+        f'/{__file_config__["filenamePrefix"]}_{category["slug"]}.{__file_config__["extension"]}'
     )
 
 
-def query_cate_slug(gql_client):
-    categories = []
-    query_cate = '''
-    query{
-	allCategories(sortBy:sortOrder_ASC){
-    slug
-  }
-}
-'''
-    query = gql(query_cate)
-    allCategories = gql_client.execute(query)
-    if isinstance(allCategories, dict) and 'allCategories' in allCategories:
-        allCategories = allCategories['allCategories']
-        if isinstance(allCategories, list) and allCategories:
-            for item in allCategories:
-                slug = item['slug']
-                categories.append(slug)
-
-        else:
-            print("no cate")
-    return categories
-
-
-def query_post(cate, gql_client):
-    posts = {}
-    date_limit = (datetime.now() - timedelta(days=2)
-            ).strftime('%Y-%m-%dT%H:%M:%S')
-    query_post = '''query{
-    allPosts(where:{state:published, categories_some:{slug:"%s"}, publishTime_gte:"%s"
-    }, sortBy:publishTime_DESC, first:%s){
-    slug
-    name
-    }
-}''' % (cate, date_limit, number)
-    query = gql(query_post)
-    allPosts = gql_client.execute(query)
-    if isinstance(allPosts, dict) and 'allPosts' in allPosts:
-        allPosts = allPosts['allPosts']
-        if isinstance(allPosts, list) and allPosts:
-            for item in allPosts:
-                slug = item['slug']
-                title = item['name']
-                posts[slug] = title
-    return posts
-
-
-def generate_sitemap_content(posts_slug_title):
-    sitemap_template = __template__['sitmap']
-    sitemap = sitemap_template['header']
-    lastmod = datetime.now().strftime('%Y-%m-%d')
-    for slug, title in posts_slug_title.items():
-        loc = __base_url__ + '/story/' + slug
-        url_tag = sitemap_template['urltag'].format(loc, lastmod, title)
-        sitemap += url_tag
-    sitemap += sitemap_template['endtag']
-    return sitemap
-
-
-def generate_sitemap_index_content(sitemap_index_url):
-    sitemap_index_template = __template__['sitemap_index']
-    index_sitemap = sitemap_index_template['header']
-    lastmod = datetime.now().strftime('%Y-%m-%d')
-    for slug in sitemap_index_url:
-        loc = __base_url__ + slug
-        sitemap_tag = sitemap_index_template['urltag'].format(loc, lastmod)
-
-        index_sitemap += sitemap_tag
-
-    index_sitemap += sitemap_index_template['endtag']
-
-    return index_sitemap
-
-
-def google_news():
-    sitemap_cate_url = []
-    gql_client = create_authenticated_k5_client(config_graphql)
-    print("query post with category")
-    categories = query_cate_slug(gql_client)
-
-    if categories:
-        # made category sitemap
-        for cate in categories:
-
-            posts = query_post(cate, gql_client)
-            if posts:
-                post_sitemap = generate_sitemap_content(posts)
-            else:
-                print("no post", cate)
-                continue
-            source_file_name = __src_file_name__['cate_post'].format(cate)
-            destination_blob_name = __destination_prefix__ + source_file_name
-            with open(source_file_name, 'w', encoding='utf8') as f:
-                f.write(post_sitemap)
-            upload_blob(__bucket_name__, source_file_name,
-                        destination_blob_name)
-            sitemap_cate_url.append('/' + destination_blob_name)
-        sitemap_index_content = generate_sitemap_index_content(sitemap_cate_url)
-        source_file_name = __src_file_name__['sitemap_index']
-        destination_blob_name = __destination_prefix__ + source_file_name
-        with open(source_file_name, 'w', encoding='utf8') as f:
-            f.write(sitemap_index_content)
-        upload_blob(__bucket_name__, source_file_name, destination_blob_name)
-    else:
-        print('no categories')
-
-    return
-
-
-if __name__ == '__main__':
-    google_news()
-    print("done")
+print(f'[{__main__.__file__}] exiting... goodbye...')

@@ -127,7 +127,7 @@ def update_multiple_states(client: Client, mutation_name: str, content: list):
 def rotate_and_update_states(client: Client):
 
     where_condition = '{OR: [{state: published}, {state: scheduled}]}'
-
+    promotionVideos_where_condition = '{state: scheduled}'
     qgl_query_content_to_modify = '''
     {
         allEditorChoices(where: %s) {
@@ -143,7 +143,7 @@ def rotate_and_update_states(client: Client):
             id
         }
     }
-    ''' % (where_condition, where_condition, where_condition)
+    ''' % (where_condition, where_condition, promotionVideos_where_condition)
 
     content = client.execute(gql(qgl_query_content_to_modify))
 
