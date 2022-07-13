@@ -205,10 +205,10 @@ if __name__ == '__main__':
             article['publishTime']), tsConverter(article['updatedAt']))
         if article['contentHtml'] is not None:
             ytb_iframe = re.search(config['feed']['item']['ytb_iframe_regex'], article['contentHtml'])
-            ytb_iframe_replacement = generate_heroImge_tag(article) if ytb_iframe else ""
+            heroImg = generate_heroImge_tag(article)
             contentHtml = re.sub(config['feed']['item']['ytb_iframe_regex'], '', article['contentHtml'])
             contentHtml = re.sub(u'[^\u0020-\uD7FF\u0009\u000A\u000D\uE000-\uFFFD\U00010000-\U0010FFFF]+', '', contentHtml)
-            content = ytb_iframe_replacement + contentHtml# add hero img in beginning of content
+            content = heroImg + contentHtml# add hero img in beginning of content
         else: content = ''
         title = re.sub(u'[^\u0020-\uD7FF\u0009\u000A\u000D\uE000-\uFFFD\U00010000-\U0010FFFF]+', '', article['name'])
         item = {
