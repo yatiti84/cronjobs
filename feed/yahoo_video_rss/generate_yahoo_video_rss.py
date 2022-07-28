@@ -7,10 +7,7 @@ import yaml
 import hashlib
 import re
 import sys
-import os
-sys.path.append('../../')
-current_dir = os.getcwd()
-print(current_dir)
+sys.path.append('/cronjobs')
 from feed.utils import create_authenticated_k5_client, upload_data, sub
 
 CONFIG_KEY = 'config'

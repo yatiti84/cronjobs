@@ -8,12 +8,7 @@ import uuid
 import yaml
 import re
 import sys
-import os
-current_dir = os.getcwd()
-print(current_dir)
 sys.path.append('/cronjobs')
-current_dir = os.getcwd()
-print(current_dir)
 from feed.utils import create_authenticated_k5_client, upload_data, tsConverter, recparse
 
 print(f'[{__main__.__file__}] executing...')
