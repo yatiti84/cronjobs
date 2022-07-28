@@ -72,6 +72,7 @@ if __name__ == '__main__':
     articles = __result__['allVideos']
     news_available_days = 365
     base_url = config['baseURL']
+    cdata_tags = ['title', 'content', 'author']
     for article in articles:
         availableDate = max(tsConverter(
             article['createdAt']), tsConverter(article['updatedAt']))
@@ -110,7 +111,7 @@ if __name__ == '__main__':
         mainXML['article'].append(item)
 
     root = ET.Element('articles')
-    recparse(root, mainXML)
+    recparse(root, mainXML, cdata_tags)
 
     data = '''<?xml version="1.0" encoding="UTF-8" ?>
     %s

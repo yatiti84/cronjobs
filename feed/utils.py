@@ -47,8 +47,8 @@ def create_authenticated_k5_client(config_graphql: dict) -> Client:
     )
 
 
-def stringWrapper(name, s):
-    if name in ['title', 'content', 'author']:
+def stringWrapper(name, s, cdata_tags):
+    if name in cdata_tags:
         return CDATA(s)
     else:
         return s
@@ -59,33 +59,33 @@ def tsConverter(s):
     timediff = timeorigin - datetime(1970, 1, 1, tzinfo=pytz.utc)
     return round(timediff.total_seconds() * 1000)
 
-def sub(parentItem, tag, content=None):
+
+def sub(parentItem, tag=str, cdata_tags=list, content=None):
     element = ET.SubElement(parentItem, tag)
     if content:
-        element.text = stringWrapper(tag, content)
+        element.text = stringWrapper(tag, content, cdata_tags)
     return element
 
-    
+
 # Can not accept structure contains 'array of array'
-def recparse(parentItem, obj):
+def recparse(parentItem, obj, cdata_tags):
     t = type(obj)
     if t is dict:
         for name, value in obj.items():
             subt = type(value)
-            # print(name, value)
             if subt is dict:
                 thisItem = ET.SubElement(parentItem, name)
-                recparse(thisItem, value)
+                recparse(thisItem, value, cdata_tags)
             elif subt is list:
                 for item in value:
                     thisItem = ET.SubElement(parentItem, name)
-                    recparse(thisItem, item)
+                    recparse(thisItem, item, cdata_tags)
             elif subt is not str:
                 thisItem = ET.SubElement(parentItem, name)
                 thisItem.text = str(value)
             else:
                 thisItem = ET.SubElement(parentItem, name)
-                thisItem.text = stringWrapper(name, value)
+                thisItem.text = stringWrapper(name, value, cdata_tags)
     elif t is list:
         raise Exception('unsupported structure')
     elif t is str:

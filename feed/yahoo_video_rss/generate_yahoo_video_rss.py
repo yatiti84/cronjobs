@@ -9,7 +9,7 @@ import re
 import sys
 sys.path.append('../cronjobs')
 
-from feed.utils import create_authenticated_k5_client, upload_data, sub
+from feed.utils import create_authenticated_k5_client, upload_data, sub, recparse
 
 CONFIG_KEY = 'config'
 GRAPHQL_CMS_CONFIG_KEY = 'graphqlCMS'
@@ -69,34 +69,41 @@ if __name__ == '__main__':
     media = config['media']
     dcterms = config['dcterms']
     feed = config['feed']
+    cdata_tags = ['title', 'description']
+    mainXML = {'channel':
+        {
+            'title': feed['title'],
+            'link': feed['link'],
+            'description': feed['description'],
+            'language': feed['language'],
+            'copyright': feed['copyright'],
+            'image': {
+                'title': feed['image']['title'],
+                'url': feed['image']['url'],
+                'link': feed['image']['link'],
+            }
+        }
+    }
     root = Element('rss', nsmap={'media':media, 'dcterms':dcterms}, version='2.0')
-    channel = sub(root, 'channel')
-    sub(channel, 'title', feed['title'])
-    sub(channel, 'link', feed['link'])
-    sub(channel, 'description', feed['description'])
-    sub(channel, 'language', feed['language'])
-    sub(channel, 'copyright', feed['copyright'])
-    image = sub(channel, 'image')
-    sub(image, 'title', feed['image']['title'])
-    sub(image, 'url', feed['image']['url'])
-    sub(image, 'link', feed['image']['link'])
+    recparse(root, mainXML, cdata_tags)
+    channel = root.find('channel')
     articles = __result__['allVideos']
     for article in articles:
         item = SubElement(channel, 'item')
-        sub(item, 'title', article['name'])
-        sub(item, 'link', article['url'])
+        sub(item, 'title', cdata_tags, article['name'])
+        sub(item, 'link', cdata_tags, article['url'])
         if article['description']:
-            sub(item, 'description', article['description'])
+            sub(item, 'description', cdata_tags, article['description'])
         if article['categories']:
-            sub(item, 'category', article['categories'][0]['name'])
+            sub(item, 'category', cdata_tags, article['categories'][0]['name'])
         if re.search(config['baseURL'], article['url']):
             SubElement(_tag='{%s}content' % media,_parent=item, nsmap={'media':media}, type="video/mp4", medium="video", url=article['url'], isDefault="true")
         media_credit = SubElement(_tag='{%s}credit' % media,_parent=item, nsmap={'media':media}, role="author")
         media_credit.text = CDATA(feed['title'])
         media_credit = SubElement(_tag='{%s}keywords' % media,_parent=item, nsmap={'media':media})
-        guid = sub(item, 'guid', hashlib.sha224((article['url']).encode()).hexdigest())
+        guid = sub(item, 'guid', cdata_tags, hashlib.sha224((article['url']).encode()).hexdigest())
         guid.set('isPermaLink','false')
-        sub(item, 'pubDate', datetime.strptime(article['createdAt'], '%Y-%m-%dT%H:%M:%S.%fZ').strftime('%A, %d %B %Y %H:%M:%S +0800'))
+        sub(item, 'pubDate', cdata_tags, datetime.strptime(article['createdAt'], '%Y-%m-%dT%H:%M:%S.%fZ').strftime('%A, %d %B %Y %H:%M:%S +0800'))
 
     data = tostring(root, encoding="unicode")
     file_config = config['file']
