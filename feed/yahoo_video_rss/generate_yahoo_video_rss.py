@@ -7,9 +7,11 @@ import yaml
 import hashlib
 import re
 import sys
-sys.path.append('../cronjobs')
-
-from .feed.utils import create_authenticated_k5_client, upload_data, sub
+import os
+sys.path.append('../../')
+current_dir = os.getcwd()
+print(current_dir)
+from feed.utils import create_authenticated_k5_client, upload_data, sub
 
 CONFIG_KEY = 'config'
 GRAPHQL_CMS_CONFIG_KEY = 'graphqlCMS'
