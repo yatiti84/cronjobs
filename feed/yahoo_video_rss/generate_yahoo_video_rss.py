@@ -9,7 +9,7 @@ import re
 import sys
 sys.path.append('../cronjobs')
 
-from feed.utils import create_authenticated_k5_client, upload_data, sub
+from .feed.utils import create_authenticated_k5_client, upload_data, sub
 
 CONFIG_KEY = 'config'
 GRAPHQL_CMS_CONFIG_KEY = 'graphqlCMS'
