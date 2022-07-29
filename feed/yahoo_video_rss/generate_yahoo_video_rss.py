@@ -85,7 +85,16 @@ if __name__ == '__main__':
         sub(item, 'title', article['name'])
         sub(item, 'link', article['url'])
         if article['description']:
-            sub(item, 'description', article['description'])
+            content = article['description']
+        else: 
+            content = ""
+            
+        if len(article['relatedPosts']) > 0:
+            content += feed['item']['relatedPostPrependHtml']
+            for related_post in article['relatedPosts'][:3]:
+                content += '<br/><a href="%s">%s</a>' % (feed['link']+related_post['slug'], related_post['name'])
+        content = re.sub(u'[^\u0020-\uD7FF\u0009\u000A\u000D\uE000-\uFFFD\U00010000-\U0010FFFF]+', '', content)
+        sub(item, 'description', content)
         if article['categories']:
             sub(item, 'category', article['categories'][0]['name'])
         if re.search(config['baseURL'], article['url']):
