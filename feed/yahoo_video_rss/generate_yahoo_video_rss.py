@@ -92,7 +92,7 @@ if __name__ == '__main__':
         if len(article['relatedPosts']) > 0:
             content += feed['item']['relatedPostPrependHtml']
             for related_post in article['relatedPosts'][:3]:
-                content += '<br/><a href="%s">%s</a>' % (feed['link']+related_post['slug'], related_post['name'])
+                content += '<br/><a href="%s">%s</a>' % (feed['link']+related_post['slug'] + config['feed']['item']['utmSource'], related_post['name'])
         content = re.sub(u'[^\u0020-\uD7FF\u0009\u000A\u000D\uE000-\uFFFD\U00010000-\U0010FFFF]+', '', content)
         sub(item, 'description', content)
         if article['categories']:
