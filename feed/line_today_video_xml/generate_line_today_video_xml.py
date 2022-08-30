@@ -94,8 +94,7 @@ if __name__ == '__main__':
                 u'[^\u0020-\uD7FF\u0009\u000A\u000D\uE000-\uFFFD\U00010000-\U0010FFFF]+', '', article['description'])
         else:
             content = ''
-        item['contents'] = {'text': {'content': content}}
-        item['video'] = {'url': article['url']}
+        item['contents'] = {'text': {'content': content}, 'video': {'url': article['url']}}
         if article['relatedPosts']:
             recommendArticles = []
             for relatedPost in article['relatedPosts'][:6]:
