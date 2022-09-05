@@ -91,9 +91,9 @@ __result__ = __gql_client__.execute(__gql_query__)
 
 def generate_heroImge_tag(article):
     if article['heroImage'] is None:
-        return f"<figure class=\"image\"><img alt=\"logo\" src=\"{config['feed']['item']['logo_url']}\"><figcaption>logo<\/figcaption><\/figure>"
+        return f"<figure class=\"image\"><img alt=\"logo\" src=\"{config['feed']['item']['logo_url']}\"><figcaption>logo" + config['feed']['item']['figuretag']
     if article['heroCaption'] :
-        return f"<figure class=\"image\"><img alt=\"{article['heroCaption']}\" src=\"{article['heroImage']['urlOriginal']}\"><figcaption>{article['heroCaption']}<\/figcaption><\/figure>"
+        return f"<figure class=\"image\"><img alt=\"{article['heroCaption']}\" src=\"{article['heroImage']['urlOriginal']}\"><figcaption>{article['heroCaption']}" + config['feed']['item']['figuretag']
     return f"<img src=\"{article['heroImage']['urlOriginal']}\">"
 
 def replace_alt_with_descrption(contentHtml, contentApiData, img_list):
@@ -110,7 +110,8 @@ def replace_alt_with_descrption(contentHtml, contentApiData, img_list):
                         new_description = apidata_item['content'][0]['title']
                     else:
                         new_description = ''
-                    contentHtml = contentHtml.replace(img, f'<figure class="image">{img}<figcaption>{new_description}<\/figcaption><\/figure>')
+                    new_img = f'<figure class="image">{img}<figcaption>{new_description}' + config['feed']['item']['figuretag'] 
+                    contentHtml = contentHtml.replace(img, new_img)
                     contentHtml = contentHtml.replace(alt[0], f'alt="{new_description}"')
                     break
     return contentHtml
