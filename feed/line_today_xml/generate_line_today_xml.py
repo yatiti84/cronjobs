@@ -251,19 +251,22 @@ if __name__ == '__main__':
         item['contentType'] = 0
         if article['heroImage'] is not None:
             item['thumbnail'] = article['heroImage']['urlOriginal']
-        item['contents'] = {'text':{'content': content}}
         if article['relatedPosts']:
+            content += config['feed']['item']['relatedPostPrependHtml']
             recommendArticles = []
             for relatedPost in article['relatedPosts'][:6]:
                 if relatedPost:
-                    recommendArticle = {
-                        'title': relatedPost['name'], 'url': base_url + relatedPost['slug'] + config['feed']['item']['utmSource']}
+                    content += '<li><a href="%s">%s</li>' % (base_url+relatedPost['slug'], relatedPost['name'])
+                    recommendArticle = {'title': relatedPost['name'], 'url': base_url + relatedPost['slug'] + config['feed']['item']['utmSource']}
                     if relatedPost['heroImage'] is not None:
                         recommendArticle['thumbnail'] = relatedPost['heroImage']['urlOriginal']
                     recommendArticles.append(recommendArticle)
+            content += "</ul>"
+        item['contents'] = {'text':{'content': content}}
+        if article['relatedPosts']:
             item['recommendArticles'] = {'article': recommendArticles}
         item['author'] = config['feed']['item']['author']
-        item['sourceUrl'] = f"{base_url}{article['slug']}"        
+        item['sourceUrl'] = base_url + article['slug'] + config['feed']['item']['utmSource']      
         if article['tags']:
             tags = []
             for tag in article['tags']:
