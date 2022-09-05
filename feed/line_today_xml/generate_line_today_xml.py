@@ -1,15 +1,8 @@
-from datetime import datetime, timedelta
-from dateutil import parser
-from google.cloud import storage
-from gql import gql, Client
-from gql.transport.aiohttp import AIOHTTPTransport
-from lxml.etree import CDATA, tostring
+from datetime import timedelta
+from gql import gql
 import __main__
 import argparse
-import gzip
-import logging
 import lxml.etree as ET
-import pytz
 import time
 import uuid
 import yaml
