@@ -243,7 +243,7 @@ if __name__ == '__main__':
             'endYmdtUnix': tsConverter(article['publishTime']) + (round(timedelta(news_available_days, 0).total_seconds()) * 1000),
             'title': title,
             'category': article['categories'][0]['name'] if len(article['categories']) > 0 else [],
-            'publishTimeUnix': availableDate,
+            'publishTimeUnix': tsConverter(article['publishTime']),
         }
         if article['updatedAt'] is not None:
             updateTimeUnix = tsConverter(article['updatedAt'])
