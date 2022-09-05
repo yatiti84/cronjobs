@@ -91,11 +91,29 @@ __result__ = __gql_client__.execute(__gql_query__)
 
 def generate_heroImge_tag(article):
     if article['heroImage'] is None:
-        return f"<img alt=\"logo\" src=\"{config['feed']['item']['logo_url']}\">"
+        return f"<figure class=\"image\"><img alt=\"logo\" src=\"{config['feed']['item']['logo_url']}\"><figcaption>logo<\/figcaption><\/figure>"
     if article['heroCaption'] :
-        return f"<img alt=\"{article['heroCaption']}\" src=\"{article['heroImage']['urlOriginal']}\">"
+        return f"<figure class=\"image\"><img alt=\"{article['heroCaption']}\" src=\"{article['heroImage']['urlOriginal']}\"><figcaption>{article['heroCaption']}<\/figcaption><\/figure>"
     return f"<img src=\"{article['heroImage']['urlOriginal']}\">"
 
+def replace_alt_with_descrption(contentHtml, contentApiData, img_list):
+    for img in img_list:
+        if 'alt' in img:
+            # new_img_tag = f'<figure class="image">{img}<figcaption><\/figcaption><\/figure>'
+            # contentHtml = contentHtml.replace(img, new_img_tag)
+            alt = re.findall('alt=\".*?\"', img)
+            img_name = re.findall('\".*\"', alt[0])
+            img_name = img_name[0].replace('"', '')
+            for apidata_item in contentApiData:
+                if apidata_item['type'] == 'image' and 'name' in apidata_item['content'][0] and apidata_item['content'][0]['name'] == img_name:
+                    if 'title' in apidata_item['content'][0]:
+                        new_description = apidata_item['content'][0]['title']
+                    else:
+                        new_description = ''
+                    contentHtml = contentHtml.replace(img, f'<figure class="image">{img}<figcaption>{new_description}<\/figcaption><\/figure>')
+                    contentHtml = contentHtml.replace(alt[0], f'alt="{new_description}"')
+                    break
+    return contentHtml
 
 if __name__ == '__main__':
     mainXML = {
