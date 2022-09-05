@@ -14,6 +14,7 @@ import time
 import uuid
 import yaml
 import re
+import json
 
 print(f'[{__main__.__file__}] executing...')
 
@@ -89,6 +90,7 @@ __qgl_post_template__ = '''
         slug
         briefHtml
         contentHtml
+        contentApiData
         heroCaption
         heroImage {
             urlOriginal
@@ -129,6 +131,22 @@ def generate_heroImge_tag(article):
     if article['heroCaption'] :
         return f"<img alt=\"{article['heroCaption']}\" src=\"{article['heroImage']['urlOriginal']}\">"
     return f"<img src=\"{article['heroImage']['urlOriginal']}\">"
+
+def replace_alt_with_descrption(contentHtml, contentApiData, img_list):
+    for img in img_list:
+        if 'alt' in img:
+            alt = re.findall('alt=\".*?\"', img)
+            img_name = re.findall('\".*\"', alt[0])
+            img_name = img_name[0].replace('"', '')
+            for apidata_item in contentApiData:
+                if apidata_item['type'] =='image' and 'name' in apidata_item['content'][0] and apidata_item['content'][0]['name'] == img_name:
+                    if 'title' in apidata_item['content'][0]:
+                        new_description = apidata_item['content'][0]['title']
+                    else:
+                        new_description = ''
+                    contentHtml = contentHtml.replace(alt[0], f'alt="{new_description}"')
+                    break
+    return contentHtml
 
 
 def recparse(parentItem, obj):
@@ -211,6 +229,9 @@ if __name__ == '__main__':
         if article['contentHtml'] is not None:
             ytb_iframe = re.search(config['feed']['item']['ytb_iframe_regex'], article['contentHtml'])
             contentHtml = re.sub(config['feed']['item']['ytb_iframe_regex'], '', article['contentHtml'])
+            img_list = re.findall('<img.*?>', contentHtml)
+            if img_list:
+                contentHtml = replace_alt_with_descrption(contentHtml, json.loads(article['contentApiData']), img_list)
             content += contentHtml
             content = re.sub(u'[^\u0020-\uD7FF\u0009\u000A\u000D\uE000-\uFFFD\U00010000-\U0010FFFF]+', '', content)
         title = re.sub(u'[^\u0020-\uD7FF\u0009\u000A\u000D\uE000-\uFFFD\U00010000-\U0010FFFF]+', '', article['name'])
