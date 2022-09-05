@@ -14,6 +14,12 @@ import time
 import uuid
 import yaml
 import re
+import json
+import sys
+sys.path.append('/cronjobs')
+from feed.utils import create_authenticated_k5_client, upload_data, tsConverter, recparse, replace_alt_with_descrption
+
+
 
 print(f'[{__main__.__file__}] executing...')
 
@@ -38,46 +44,6 @@ with open(getattr(args, GRAPHQL_CMS_CONFIG_KEY), 'r') as stream:
 number = getattr(args, NUMBER_KEY)
 
 
-def create_authenticated_k5_client(config_graphql: dict) -> Client:
-    logger = logging.getLogger(__main__.__file__)
-    logger.setLevel('INFO')
-    # Authenticate through GraphQL
-
-    gql_endpoint = config_graphql['apiEndpoint']
-    gql_transport = AIOHTTPTransport(
-        url=gql_endpoint,
-    )
-    gql_client = Client(
-        transport=gql_transport,
-        fetch_schema_from_transport=False,
-    )
-    qgl_mutation_authenticate_get_token = '''
-    mutation {
-        authenticate: authenticateUserWithPassword(email: "%s", password: "%s") {
-            token
-        }
-    }
-    '''
-    mutation = qgl_mutation_authenticate_get_token % (
-        config_graphql['username'], config_graphql['password'])
-
-    token = gql_client.execute(gql(mutation))['authenticate']['token']
-
-    gql_transport_with_token = AIOHTTPTransport(
-        url=gql_endpoint,
-        headers={
-            'Authorization': f'Bearer {token}'
-        },
-        timeout=60
-    )
-
-    return Client(
-        transport=gql_transport_with_token,
-        execute_timeout=60,
-        fetch_schema_from_transport=False,
-    )
-
-
 __gql_client__ = create_authenticated_k5_client(config_graphql)
 
 # To retrieve the latest 100 published posts
@@ -87,7 +53,9 @@ __qgl_post_template__ = '''
         id
         name
         slug
+        briefHtml
         contentHtml
+        contentApiData
         heroCaption
         heroImage {
             urlOriginal
@@ -121,72 +89,12 @@ __gql_query__ = gql(__qgl_post_template__ %
                     (config['postWhereFilter'], number))
 __result__ = __gql_client__.execute(__gql_query__)
 
-# Can not accept structure contains 'array of array'
 def generate_heroImge_tag(article):
     if article['heroImage'] is None:
         return f"<img alt=\"logo\" src=\"{config['feed']['item']['logo_url']}\">"
     if article['heroCaption'] :
         return f"<img alt=\"{article['heroCaption']}\" src=\"{article['heroImage']['urlOriginal']}\">"
     return f"<img src=\"{article['heroImage']['urlOriginal']}\">"
-
-
-def recparse(parentItem, obj):
-    t = type(obj)
-    if t is dict:
-        for name, value in obj.items():
-            subt = type(value)
-            # print(name, value)
-            if subt is dict:
-                thisItem = ET.SubElement(parentItem, name)
-                recparse(thisItem, value)
-            elif subt is list:
-                for item in value:
-                    thisItem = ET.SubElement(parentItem, name)
-                    recparse(thisItem, item)
-            elif subt is not str:
-                thisItem = ET.SubElement(parentItem, name)
-                thisItem.text = str(value)
-            else:
-                thisItem = ET.SubElement(parentItem, name)
-                thisItem.text = stringWrapper(name, value)
-    elif t is list:
-        raise Exception('unsupported structure')
-    elif t is str:
-        parentItem.text = obj
-    return
-
-
-def stringWrapper(name, s):
-    if name in ['title', 'content', 'author']:
-        return CDATA(s)
-    else:
-        return s
-
-
-def tsConverter(s):
-    timeorigin = parser.parse(s)
-    timediff = timeorigin - datetime(1970, 1, 1, tzinfo=pytz.utc)
-    return round(timediff.total_seconds() * 1000)
-
-
-def upload_data(bucket_name: str, data: bytes, content_type: str, destination_blob_name: str):
-    '''Uploads a file to the bucket.'''
-    # bucket_name = 'your-bucket-name'
-    # data = 'storage-object-content'
-
-    storage_client = storage.Client()
-    bucket = storage_client.bucket(bucket_name)
-    blob = bucket.blob(destination_blob_name)
-    blob.content_encoding = 'gzip'
-    print(f'[{__main__.__file__}] uploadling data to gs://{bucket_name}{destination_blob_name}')
-    blob.upload_from_string(
-        data=gzip.compress(data=data, compresslevel=9), content_type=content_type, client=storage_client)
-    blob.content_language = 'zh'
-    blob.cache_control = 'max-age=300,public,must-revalidate'
-    blob.patch()
-
-    print(
-        f'[{__main__.__file__}] finished uploading gs://{bucket_name}{destination_blob_name}')
 
 
 if __name__ == '__main__':
@@ -203,13 +111,18 @@ if __name__ == '__main__':
     for article in articles:
         availableDate = max(tsConverter(
             article['publishTime']), tsConverter(article['updatedAt']))
+        content =  generate_heroImge_tag(article)# add hero img in beginning of content
+        if article['briefHtml'] is not None:
+            brief = article['briefHtml']
+            content += brief 
         if article['contentHtml'] is not None:
             ytb_iframe = re.search(config['feed']['item']['ytb_iframe_regex'], article['contentHtml'])
-            heroImg = generate_heroImge_tag(article)
             contentHtml = re.sub(config['feed']['item']['ytb_iframe_regex'], '', article['contentHtml'])
-            contentHtml = re.sub(u'[^\u0020-\uD7FF\u0009\u000A\u000D\uE000-\uFFFD\U00010000-\U0010FFFF]+', '', contentHtml)
-            content = heroImg + contentHtml# add hero img in beginning of content
-        else: content = ''
+            img_list = re.findall('<img.*?>', contentHtml)
+            if img_list:
+                contentHtml = replace_alt_with_descrption(contentHtml, json.loads(article['contentApiData']), img_list)
+            content += contentHtml
+            content = re.sub(u'[^\u0020-\uD7FF\u0009\u000A\u000D\uE000-\uFFFD\U00010000-\U0010FFFF]+', '', content)
         title = re.sub(u'[^\u0020-\uD7FF\u0009\u000A\u000D\uE000-\uFFFD\U00010000-\U0010FFFF]+', '', article['name'])
         item = {
             'ID': article['id'],
@@ -219,7 +132,7 @@ if __name__ == '__main__':
             'endYmdtUnix': tsConverter(article['publishTime']) + (round(timedelta(news_available_days, 0).total_seconds()) * 1000),
             'title': title,
             'category': article['categories'][0]['name'] if len(article['categories']) > 0 else [],
-            'publishTimeUnix': availableDate,
+            'publishTimeUnix': tsConverter(article['publishTime']),
         }
         if article['updatedAt'] is not None:
             updateTimeUnix = tsConverter(article['updatedAt'])
@@ -227,19 +140,22 @@ if __name__ == '__main__':
         item['contentType'] = 0
         if article['heroImage'] is not None:
             item['thumbnail'] = article['heroImage']['urlOriginal']
-        item['contents'] = {'text':{'content': content}}
         if article['relatedPosts']:
+            content += config['feed']['item']['relatedPostPrependHtml']
             recommendArticles = []
             for relatedPost in article['relatedPosts'][:6]:
                 if relatedPost:
-                    recommendArticle = {
-                        'title': relatedPost['name'], 'url': base_url + relatedPost['slug'] + config['feed']['item']['utmSource']}
+                    content += '<li><a href="%s">%s</li>' % (base_url+relatedPost['slug'], relatedPost['name'])
+                    recommendArticle = {'title': relatedPost['name'], 'url': base_url + relatedPost['slug'] + config['feed']['item']['utmSource']}
                     if relatedPost['heroImage'] is not None:
                         recommendArticle['thumbnail'] = relatedPost['heroImage']['urlOriginal']
                     recommendArticles.append(recommendArticle)
+            content += "</ul>"
+        item['contents'] = {'text':{'content': content}}
+        if article['relatedPosts']:
             item['recommendArticles'] = {'article': recommendArticles}
         item['author'] = config['feed']['item']['author']
-        item['sourceUrl'] = f"{base_url}{article['slug']}"        
+        item['sourceUrl'] = base_url + article['slug'] + config['feed']['item']['utmSource']      
         if article['tags']:
             tags = []
             for tag in article['tags']:
