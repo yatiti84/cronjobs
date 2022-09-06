@@ -157,8 +157,10 @@ if __name__ == '__main__':
             recommendArticles = []
             for relatedPost in article['relatedPosts'][:6]:
                 if relatedPost:
-                    content += '<li><a href="%s">%s</li>' % (base_url+relatedPost['slug'], relatedPost['name'])
-                    recommendArticle = {'title': relatedPost['name'], 'url': base_url + relatedPost['slug'] + config['feed']['item']['utmSource']}
+                    relatedPostTitle = relatedPost['name']
+                    relatedPostUrl = base_url + relatedPost['slug'] + config['feed']['item']['utmSource']
+                    content += '<li><a href="%s">%s</li>' % (relatedPostUrl, relatedPostTitle)
+                    recommendArticle = {'title': relatedPostTitle, 'url': relatedPostUrl }
                     if relatedPost['heroImage'] is not None:
                         recommendArticle['thumbnail'] = relatedPost['heroImage']['urlOriginal']
                     recommendArticles.append(recommendArticle)
