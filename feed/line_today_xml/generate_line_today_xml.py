@@ -58,7 +58,7 @@ __qgl_post_template__ = '''
             name
             slug
         }
-        relatedPosts {
+        relatedPosts(first:2) {
             name
             slug
             heroImage {
@@ -155,7 +155,7 @@ if __name__ == '__main__':
         if article['relatedPosts']:
             content += config['feed']['item']['relatedPostPrependHtml']
             recommendArticles = []
-            for relatedPost in article['relatedPosts'][:6]:
+            for relatedPost in article['relatedPosts']:
                 if relatedPost:
                     relatedPostTitle = relatedPost['name']
                     relatedPostUrl = base_url + relatedPost['slug'] + config['feed']['item']['utmSource']
