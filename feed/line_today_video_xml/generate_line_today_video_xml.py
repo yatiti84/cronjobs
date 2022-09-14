@@ -91,9 +91,9 @@ if __name__ == '__main__':
         item['contentType'] = 5
         if article['description'] is not None:
             content = re.sub(
-                u'[^\u0020-\uD7FF\u0009\u000A\u000D\uE000-\uFFFD\U00010000-\U0010FFFF]+', '', article['description'])
+                u'[^\u0020-\uD7FF\u0009\u000A\u000D\uE000-\uFFFD\U00010000-\U0010FFFF]+', '', article['description']+ config['feed']['item']['officialLine'])
         else:
-            content = ''
+            content = config['feed']['item']['officialLine']
         item['contents'] = {'text': {'content': content}, 'video': {'url': article['url']}}
         if article['relatedPosts']:
             recommendArticles = []

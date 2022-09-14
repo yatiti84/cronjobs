@@ -130,10 +130,11 @@ if __name__ == '__main__':
         if article['contentHtml'] is not None:
             ytb_iframe = re.search(config['feed']['item']['ytb_iframe_regex'], article['contentHtml'])
             contentHtml = re.sub(config['feed']['item']['ytb_iframe_regex'], '', article['contentHtml'])
+            contentHtml = re.sub(config['feed']['item']['redundantContent'], '', contentHtml)
             img_list = re.findall('<img.*?>', contentHtml)
             if img_list:
                 contentHtml = replace_alt_with_descrption(contentHtml, json.loads(article['contentApiData']), img_list)
-            content += contentHtml
+            content += contentHtml + config['feed']['item']['officialLine']
             content = re.sub(u'[^\u0020-\uD7FF\u0009\u000A\u000D\uE000-\uFFFD\U00010000-\U0010FFFF]+', '', content)
         title = re.sub(u'[^\u0020-\uD7FF\u0009\u000A\u000D\uE000-\uFFFD\U00010000-\U0010FFFF]+', '', article['name'])
         item = {
@@ -158,7 +159,7 @@ if __name__ == '__main__':
             for relatedPost in article['relatedPosts']:
                 if relatedPost:
                     relatedPostTitle = relatedPost['name']
-                    relatedPostUrl = base_url + relatedPost['slug'] + config['feed']['item']['utmSource']
+                    relatedPostUrl = base_url + relatedPost['slug'] + config['feed']['item']['utmSource'] + '_' + article['slug']
                     content += '<li><a href="%s">%s</li>' % (relatedPostUrl, relatedPostTitle)
                     recommendArticle = {'title': relatedPostTitle, 'url': relatedPostUrl }
                     if relatedPost['heroImage'] is not None:
