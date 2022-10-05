@@ -48,7 +48,7 @@ query{
     }
     createdAt
     updatedAt
-    relatedPosts(first:2, sortBy:publishTime_DESC) {
+    relatedPosts(first:2, sortBy:publishTime_DESC, where:{state:published}){
         name
         slug
         heroImage {
