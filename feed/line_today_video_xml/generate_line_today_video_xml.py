@@ -48,7 +48,7 @@ query{
     }
     createdAt
     updatedAt
-    relatedPosts {
+    relatedPosts(first:2, sortBy:publishTime_DESC) {
         name
         slug
         heroImage {
@@ -94,16 +94,21 @@ if __name__ == '__main__':
                 u'[^\u0020-\uD7FF\u0009\u000A\u000D\uE000-\uFFFD\U00010000-\U0010FFFF]+', '', article['description']+ config['feed']['item']['officialLine'])
         else:
             content = config['feed']['item']['officialLine']
-        item['contents'] = {'text': {'content': content}, 'video': {'url': article['url']}}
         if article['relatedPosts']:
+            content += config['feed']['item']['relatedPostPrependHtml']
             recommendArticles = []
-            for relatedPost in article['relatedPosts'][:6]:
+            for relatedPost in article['relatedPosts']:
                 if relatedPost:
-                    recommendArticle = {
-                        'title': relatedPost['name'], 'url': base_url + relatedPost['slug'] + config['feed']['item']['utmSource']}
+                    relatedPostTitle = relatedPost['name']
+                    relatedPostUrl = base_url + relatedPost['slug'] + config['feed']['item']['utmSource'] + '_' + article['name']
+                    content += '<li><a href="%s">%s</li>' % (relatedPostUrl, relatedPostTitle)
+                    recommendArticle = {'title': relatedPostTitle, 'url': relatedPostUrl}
                     if relatedPost['heroImage'] is not None:
                         recommendArticle['thumbnail'] = relatedPost['heroImage']['urlOriginal']
                     recommendArticles.append(recommendArticle)
+            content += "</ul>"
+        item['contents'] = {'text': {'content': content}, 'video': {'url': article['url']}}
+        if article['relatedPosts']:
             item['recommendArticles'] = {'article': recommendArticles}
         item['author'] = config['feed']['item']['author']
         mainXML['article'].append(item)
