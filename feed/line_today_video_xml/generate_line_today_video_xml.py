@@ -107,7 +107,7 @@ if __name__ == '__main__':
                         recommendArticle['thumbnail'] = relatedPost['heroImage']['urlOriginal']
                     recommendArticles.append(recommendArticle)
             content += "</ul>"
-        item['contents'] = {'text': {'content': content}, 'video': {'url': article['url']}}
+        item['contents'] = {'video': {'url': article['url']}, 'text': {'content': content}}
         if article['relatedPosts']:
             item['recommendArticles'] = {'article': recommendArticles}
         item['author'] = config['feed']['item']['author']
